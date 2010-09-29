@@ -109,7 +109,7 @@ func (p *LunchPoll) unVote(who string) bool {
 		return true
 	}
 	return false
-}
+
 
 func (p *LunchPoll) displayPlaces() []Place {
 	ret := make([]Place, p.places.Len())
