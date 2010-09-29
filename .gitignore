@@ -1,0 +1,8 @@
+*.out
+*.6
+*.swp
+lunch
+server
+.DS_Store
+config.json
+lunch_config.json
