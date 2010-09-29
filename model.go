@@ -100,7 +100,6 @@ func (p *LunchPoll) vote(who string, vote uint) bool {
 }
 
 func (p *LunchPoll) unVote(who string) bool {
-	fmt.Println("unvoting: " + who)
 	if place, voted := p.votes[who]; voted {
 		place.Votes--
 		p.votes[who] = nil, false
@@ -111,7 +110,6 @@ func (p *LunchPoll) unVote(who string) bool {
 }
 
 func (p *LunchPoll) displayPlaces() []Place {
-	fmt.Println(p.places.Len())
 	ret := make([]Place, p.places.Len())
 	var i = 0
 	for place := range p.places.Iter() {
