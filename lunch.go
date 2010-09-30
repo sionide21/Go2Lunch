@@ -17,8 +17,18 @@ import (
 )
 
 const (
-	destErr    = "Invalid Destination"
-	configFile = ".lunch_config.json"
+	configFile    = ".lunch_config.json"
+	destErr       = "Invalid Destination"
+	unvoteError   = "UnVoting Failed"
+	undriveError  = "UnDriving Failed"
+	voteError     = "Vote Failed"
+	driveError    = "Drive Failed"
+	delPlaceError = "Could not delete. This can happen if there are still votes on the place or if you did not nominate it."
+
+	noSekrit  = "No Auth Token"
+	noUser    = "No User Name"
+	noHost    = "No Host"
+	badRandom = "Random NOT random"
 )
 
 var add = flag.Bool("a", false, "add a place")
@@ -28,94 +38,23 @@ var unvote = flag.Bool("u", false, "unvote")
 var server = flag.String("s", "", "[host]:[port]")
 var name = flag.String("n", "", "user name")
 var walk = flag.Bool("w", false, "not driving")
+var debug = flag.Bool("g", false, "debug")
 var sekrit = ""
 var user = ""
 var host = ""
 
 type LunchServer struct {
 	*rpc.Client
-	Auth
-}
-
-func getConfig() (err os.Error) {
-	config := make(map[string]string)
-	home := os.Getenv("HOME")
-	read, err := ioutil.ReadFile(path.Join(home, configFile))
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(read, &config)
-	if err != nil {
-		return
-	}
-	var ok bool
-	sekrit, ok = config["sekrit"]
-	if !ok {
-		return os.NewError("No Sekrit")
-	}
-	host, ok = config["host"]
-	if !ok {
-		return os.NewError("No Host")
-	}
-	user, ok = config["user"]
-	if !ok {
-		return os.NewError("No User")
-	}
-	return
-}
-
-func genConfig() (err os.Error) {
-	getConfig()
-	config := make(map[string]string)
-	if *server != "" {
-		config["host"] = *server
-	} else {
-		config["host"] = host
-	}
-	if *name != "" {
-		config["user"] = *name
-	} else {
-		config["user"] = user
-	}
-	if sekrit == "" {
-		newSekrit := make([]byte, 512, 512)
-		encoder := base64.StdEncoding
-
-		_, err := rand.Read(newSekrit)
-		if err != nil {
-			panic("Random not random")
-		}
-		newEncoded := make([]byte, encoder.EncodedLen(len(newSekrit)), encoder.EncodedLen(len(newSekrit)))
-		encoder.Encode(newEncoded, newSekrit)
-		config["sekrit"] = string(newEncoded)
-	}
-	if config["sekrit"] == "" {
-		err = os.NewError("Missing Sekrit")
-		return
-	} else {
-		sekrit = config["sekrit"]
-	}
-	if config["user"] == "" {
-		err = os.NewError("Missing User")
-		return
-	} else {
-		user = config["user"]
-	}
-	if config["host"] == "" {
-		err = os.NewError("Missing host")
-	} else {
-		host = config["host"]
-	}
-	data, err := json.Marshal(config)
-	if err != nil {
-		return
-	}
-	home := os.Getenv("HOME")
-	err = ioutil.WriteFile(path.Join(home, configFile), data, 0600)
-	return
 }
 
 func main() {
+	defer func() {
+		if !*debug {
+			if bad := recover(); bad != nil {
+				fmt.Println(bad)
+			}
+		}
+	}()
 	flag.Parse()
 	err := getConfig()
 	if err != nil {
@@ -126,99 +65,106 @@ func main() {
 		fmt.Println("\"" + user + "\":\"" + sekrit + "\"")
 		return
 	}
+
 	r, e := rpc.DialHTTP("tcp", host)
 	if e != nil {
 		fmt.Println("Cannot connect to server: " + host)
 		os.Exit(-1)
 	}
-	remote := &LunchServer{r, Auth{Name: "User"}}
+	remote := &LunchServer{r}
 
-	if *seats != 0 {
-		if !remote.drive(*seats) {
-			fmt.Println("Drive Failed")
-		}
-		return
-	}
+	dest, err := strconv.Atoui(flag.Arg(0))
+	var places *[]Place
 
-	if *walk {
-		if !remote.undrive() {
-			fmt.Println("UnDrive Failed")
-		}
-		return
-	}
-	if !*unvote && flag.NArg() == 0 {
-		places := remote.displayPlaces()
-		if places != nil {
-			for _, p := range *places {
-				fmt.Println(p.String())
-			}
-		}
-		return
-	}
-
-	var dest uint = 0
-	if *add && !*del {
+	switch {
+	case *seats != 0:
+		remote.drive(*seats)
+	case *walk:
+		remote.undrive()
+	case *add:
 		name := strings.Join(flag.Args(), " ")
 		dest = remote.addPlace(name)
-		return
+	case *del:
+		remote.delPlace(dest)
+	case *unvote:
+		remote.unvote()
+	case dest != 0:
+		remote.vote(dest)
+	default:
+		places = remote.displayPlaces()
 	}
 
-	if dest == 0 {
-		dest, _ = strconv.Atoui(flag.Arg(0))
+	if places != nil {
+		for _, p := range *places {
+			fmt.Println(p.String())
+		}
 	}
 
-	if *del {
-		if !remote.delPlace(dest) {
-			fmt.Println("Could not delete. This can happen if there are still votes on the place or if you did not nominate it.")
-		}
-		return
-	}
-
-	if *unvote {
-		if !remote.unvote() {
-			fmt.Println("Unvoting Failed")
-		}
-		return
-	} else {
-		if !remote.vote(dest) {
-			fmt.Println("Vote Failed")
-		}
-		return
-	}
 }
 
 func (t *LunchServer) addPlace(name string) (place uint) {
 	args := &AddPlaceArgs{Name: name}
 	args.Auth = *(t.calcAuth(args))
-	t.Call("LunchTracker.AddPlace", &args, &place)
+	err := t.Call("LunchTracker.AddPlace", &args, &place)
+	if err != nil {
+		panic(err)
+	}
 	return
 }
 
-func (t *LunchServer) delPlace(dest uint) (suc bool) {
+func (t *LunchServer) delPlace(dest uint) {
 	args := &UIntArgs{Num: dest}
 	args.Auth = *(t.calcAuth(args))
-	t.Call("LunchTracker.DelPlace", args, &suc)
+	var suc bool
+	err := t.Call("LunchTracker.DelPlace", args, &suc)
+	if err != nil {
+		panic(err)
+	}
+	if !suc {
+		panic(delPlaceError)
+	}
 	return
 }
 
-func (t *LunchServer) drive(seats uint) (suc bool) {
+func (t *LunchServer) drive(seats uint) {
 	args := &UIntArgs{Num: seats}
 	args.Auth = *(t.calcAuth(args))
-	t.Call("LunchTracker.Drive", args, &suc)
+	var suc bool
+	err := t.Call("LunchTracker.Drive", args, &suc)
+	if err != nil {
+		panic(err)
+	}
+	if !suc {
+		panic(driveError)
+	}
 	return
 }
 
-func (t *LunchServer) vote(dest uint) (suc bool) {
+func (t *LunchServer) vote(dest uint) {
 	args := &UIntArgs{Num: dest}
 	args.Auth = *(t.calcAuth(args))
-	t.Call("LunchTracker.Vote", args, &suc)
+	var suc bool
+	err := t.Call("LunchTracker.Vote", args, &suc)
+	if err != nil {
+		panic(err)
+	}
+	if !suc {
+		panic(voteError)
+	}
 	return
 }
 
-func (t *LunchServer) unvote() (suc bool) {
+func (t *LunchServer) unvote() {
 	args := &EmptyArgs{}
 	args.Auth = *(t.calcAuth(args))
-	t.Call("LunchTracker.UnVote", args, &suc)
+	var suc bool
+	err := t.Call("LunchTracker.UnVote", args, &suc)
+	if err != nil {
+		panic(err)
+	}
+	if !suc {
+		panic(unvoteError)
+	}
 	return
 }
 
@@ -226,23 +172,110 @@ func (t *LunchServer) displayPlaces() *[]Place {
 	args := &EmptyArgs{}
 	args.Auth = *(t.calcAuth(args))
 	var places []Place
-	t.Call("LunchTracker.DisplayPlaces", args, &places)
+	err := t.Call("LunchTracker.DisplayPlaces", args, &places)
+	if err != nil && err != os.EOF {
+		panic(err)
+	}
 	return &places
 }
 
-func (t *LunchServer) undrive() (suc bool) {
+func (t *LunchServer) undrive() {
 	args := &EmptyArgs{}
 	args.Auth = *(t.calcAuth(args))
-	t.Call("LunchTracker.UnDrive", args, &suc)
+	var suc bool
+	err := t.Call("LunchTracker.UnDrive", args, &suc)
+	if err != nil {
+		panic(err)
+	}
+	if !suc {
+		panic(undriveError)
+	}
 	return
 }
 
 func (t *LunchServer) calcAuth(d Byter) (a *Auth) {
 	var challenge []byte
-	t.Call("LunchTracker.Challenge", &user, &challenge)
-	a = &Auth{Name: user, CChallenge: challenge}
+	err := t.Call("LunchTracker.Challenge", &user, &challenge)
+	if err != nil {
+		panic(err)
+	}
+	a = &Auth{Name: user, SChallenge: challenge}
 	sum(d, a)
 	return
+
+}
+
+func getConfig() (err os.Error) {
+	config := make(map[string]string)
+	home := os.Getenv("HOME")
+
+	var read []byte
+	if read, err = ioutil.ReadFile(path.Join(home, configFile)); err != nil {
+		return
+	}
+
+	if err = json.Unmarshal(read, &config); err != nil {
+		return
+	}
+
+	var ok bool
+	if user, ok = config["user"]; !ok {
+		return os.NewError(noUser)
+	}
+	if sekrit, ok = config["sekrit"]; !ok {
+		return os.NewError(noSekrit)
+	}
+
+	if host, ok = config["host"]; !ok {
+		return os.NewError(noHost)
+	}
+
+	return
+}
+
+func genConfig() (err os.Error) {
+	config := make(map[string]string)
+	config["host"] = *server
+	config["user"] = *name
+	config["sekrit"] = string(*makeSekrit())
+
+	switch {
+	case config["sekrit"] == "":
+		err = os.NewError(noSekrit)
+	case config["user"] == "":
+		err = os.NewError(noUser)
+	case config["host"] == "":
+		err = os.NewError(noHost)
+	}
+
+	if err != nil {
+		return
+	}
+
+	data, err := json.Marshal(config)
+	if err != nil {
+		return
+	}
+
+	user = config["user"]
+	sekrit = config["sekrit"]
+	host = config["host"]
+	home := os.Getenv("HOME")
+	err = ioutil.WriteFile(path.Join(home, configFile), data, 0600)
+	return
+}
+
+func makeSekrit() *[]byte {
+	newSekrit := make([]byte, 512, 512)
+	encoder := base64.StdEncoding
+
+	_, err := rand.Read(newSekrit)
+	if err != nil {
+		panic(badRandom)
+	}
+	newEncoded := make([]byte, encoder.EncodedLen(len(newSekrit)), encoder.EncodedLen(len(newSekrit)))
+	encoder.Encode(newEncoded, newSekrit)
+	return &newEncoded
 }
 
 func sum(d Byter, a *Auth) {
@@ -251,7 +284,7 @@ func sum(d Byter, a *Auth) {
 	_, err := rand.Read(challenge)
 
 	if err != nil {
-		panic("Random not random.")
+		panic(badRandom)
 	}
 	(*a).CChallenge = challenge
 

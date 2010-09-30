@@ -1,7 +1,9 @@
 package main
+
 import (
 	"container/list"
 )
+
 type ServerPlace struct {
 	Place
 	PeopleList *list.List
@@ -30,14 +32,14 @@ type LunchPoll struct {
 	places       *list.List
 	people       *list.List
 	indexCounter uint
-	votes map[string]*ServerPlace
+	votes        map[string]*ServerPlace
 }
 
 func NewPoll() *LunchPoll {
 	return &LunchPoll{
 		places:       list.New(),
 		people:       list.New(),
-		votes: make(map[string]*ServerPlace),
+		votes:        make(map[string]*ServerPlace),
 		indexCounter: 1}
 }
 
@@ -52,7 +54,7 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 			list.New()}
 
 		p.places.PushBack(place)
-		defer func() {p.indexCounter++}()
+		defer func() { p.indexCounter++ }()
 		person.NominationsLeft--
 	}
 	return p.indexCounter
@@ -78,7 +80,7 @@ func (p *LunchPoll) drive(who string, seats uint) bool {
 	return true
 }
 
-func (p *LunchPoll) unDrive(who string) bool{
+func (p *LunchPoll) unDrive(who string) bool {
 	person := p.getPerson(who)
 	person.CanDrive = false
 	person.NumSeats = 0
@@ -188,4 +190,3 @@ func flattenPlace(server *ServerPlace) (place Place) {
 	}
 	return
 }
-
