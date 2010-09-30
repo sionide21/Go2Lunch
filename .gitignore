@@ -1,6 +1,7 @@
 *.out
 *.6
 *.swp
+update
 lunch
 server
 .DS_Store

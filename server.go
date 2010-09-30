@@ -26,6 +26,7 @@ type ServerConfig struct {
 type LunchTracker struct {
 	*LunchPoll
 }
+
 var userMap map[string]*Auth
 var config *ServerConfig
 var cMutex sync.Mutex
