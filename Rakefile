@@ -2,7 +2,8 @@ common = ['common.go']
 
 $exes = {
     'server' => common + ['model.go'], 
-    'lunch' => common
+    'lunch' => common,
+    'update' => []
 }
 
 def getDep(file)
