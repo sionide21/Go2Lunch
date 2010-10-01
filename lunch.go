@@ -47,6 +47,7 @@ var name = flag.String("n", "", "user name")
 var walk = flag.Bool("w", false, "not driving")
 var debug = flag.Bool("g", false, "debug")
 var noup = flag.Bool("p", false, "disable automatic update checks")
+var version = flag.Bool("v", false, "show current version")
 var sekrit = ""
 var user = ""
 var host = ""
@@ -95,6 +96,8 @@ func main() {
 	var places *[]Place
 
 	switch {
+	case *version:
+		fmt.Printf("Go2Lunch %s\n", clientVersion)
 	case *seats != 0:
 		remote.drive(*seats)
 	case *walk:
