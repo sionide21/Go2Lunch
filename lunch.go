@@ -14,10 +14,12 @@ import (
 	"json"
 	"encoding/base64"
 	"path"
+	"template"
 )
 
 const (
-	configFile    = ".lunch_config.json"
+	configFile    = "config"
+	templateFile  = "template"
 	destErr       = "Invalid Destination"
 	unvoteError   = "UnVoting Failed"
 	undriveError  = "UnDriving Failed"
@@ -96,11 +98,22 @@ func main() {
 
 	if places != nil {
 		for _, p := range *places {
-			fmt.Println(p.String())
+			ppPlace(&p)
 		}
 	}
 
 }
+
+func ppPlace(place *Place) {
+	home := os.Getenv("HOME")
+	t, err := template.ParseFile(path.Join(home, ".lunch", templateFile), nil)
+	if err != nil {
+		fmt.Println((*place).String())
+		return
+	}
+	t.Execute(place, os.Stdout)
+}
+
 
 func (t *LunchServer) addPlace(name string) (place uint) {
 	args := &AddPlaceArgs{Name: name}
@@ -210,7 +223,7 @@ func getConfig() (err os.Error) {
 	home := os.Getenv("HOME")
 
 	var read []byte
-	if read, err = ioutil.ReadFile(path.Join(home, configFile)); err != nil {
+	if read, err = ioutil.ReadFile(path.Join(home, ".lunch", configFile)); err != nil {
 		return
 	}
 
@@ -261,7 +274,7 @@ func genConfig() (err os.Error) {
 	sekrit = config["sekrit"]
 	host = config["host"]
 	home := os.Getenv("HOME")
-	err = ioutil.WriteFile(path.Join(home, configFile), data, 0600)
+	err = ioutil.WriteFile(path.Join(home, ".lunch", configFile), data, 0600)
 	return
 }
 
