@@ -1,3 +1,4 @@
 {Id}) {Name} nominated by {Nominator} [{Votes} votes]
-{.repeated section People}  - {Name} [{NumSeats} seats] {.alternates with} "\n" {.end}
+{.repeated section People}  - {Name} [{NumSeats} seats] {.alternates with}
+{.end}
 
