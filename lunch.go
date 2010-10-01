@@ -274,7 +274,12 @@ func genConfig() (err os.Error) {
 	sekrit = config["sekrit"]
 	host = config["host"]
 	home := os.Getenv("HOME")
-	err = ioutil.WriteFile(path.Join(home, ".lunch", configFile), data, 0600)
+	
+	confPath := path.Join(home, ".lunch")
+	if err = os.MkdirAll(confPath, 0700); err != nil {
+		return
+	}
+	err = ioutil.WriteFile(path.Join(confPath, configFile), data, 0600)
 	return
 }
 
