@@ -20,6 +20,9 @@ import (
 const (
 	configFile    = "config"
 	templateFile  = "template"
+)
+
+const (
 	destErr       = "Invalid Destination"
 	unvoteError   = "UnVoting Failed"
 	undriveError  = "UnDriving Failed"
@@ -33,6 +36,8 @@ const (
 	badRandom = "Random NOT random"
 )
 
+const clientVersion = "1.0"
+
 var add = flag.Bool("a", false, "add a place")
 var del = flag.Bool("rm", false, "remove a place")
 var seats = flag.Uint("d", 0, "driver with _ additional seats")
@@ -41,6 +46,7 @@ var server = flag.String("s", "", "[host]:[port]")
 var name = flag.String("n", "", "user name")
 var walk = flag.Bool("w", false, "not driving")
 var debug = flag.Bool("g", false, "debug")
+var noup = flag.Bool("p", false, "disable automatic update checks")
 var sekrit = ""
 var user = ""
 var host = ""
@@ -57,7 +63,17 @@ func main() {
 			}
 		}
 	}()
+	
 	flag.Parse()
+	
+	// Check for new versions of the client application.
+	if !*noup {
+		err := CheckForUpdates()
+		if err != nil {
+			panic(err)
+		}
+	}
+	
 	err := getConfig()
 	if err != nil {
 		err = genConfig()
