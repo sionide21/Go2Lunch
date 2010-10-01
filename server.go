@@ -58,7 +58,7 @@ func loadUsersFromFile() (err os.Error) {
 }
 
 func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *uint) os.Error {
-	valid, ive := verify(args.Auth, args)
+	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
 	}
@@ -67,7 +67,7 @@ func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *uint) os.Error {
 }
 
 func (t *LunchTracker) DelPlace(args *UIntArgs, success *bool) os.Error {
-	valid, ive := verify(args.Auth, args)
+	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
 	}
@@ -76,7 +76,7 @@ func (t *LunchTracker) DelPlace(args *UIntArgs, success *bool) os.Error {
 }
 
 func (t *LunchTracker) Drive(args *UIntArgs, success *bool) os.Error {
-	valid, ive := verify(args.Auth, args)
+	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
 	}
@@ -85,7 +85,7 @@ func (t *LunchTracker) Drive(args *UIntArgs, success *bool) os.Error {
 }
 
 func (t *LunchTracker) UnDrive(args *EmptyArgs, success *bool) os.Error {
-	valid, ive := verify(args.Auth, args)
+	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
 	}
@@ -94,7 +94,7 @@ func (t *LunchTracker) UnDrive(args *EmptyArgs, success *bool) os.Error {
 }
 
 func (t *LunchTracker) Vote(args *UIntArgs, success *bool) os.Error {
-	valid, ive := verify(args.Auth, args)
+	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
 	}
@@ -104,7 +104,7 @@ func (t *LunchTracker) Vote(args *UIntArgs, success *bool) os.Error {
 }
 
 func (t *LunchTracker) UnVote(args *EmptyArgs, success *bool) os.Error {
-	valid, ive := verify(args.Auth, args)
+	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
 	}
@@ -113,7 +113,7 @@ func (t *LunchTracker) UnVote(args *EmptyArgs, success *bool) os.Error {
 }
 
 func (t *LunchTracker) DisplayPlaces(args *EmptyArgs, response *[]Place) os.Error {
-	valid, ive := verify(args.Auth, args)
+	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
 	}
@@ -131,18 +131,11 @@ func (t *LunchTracker) Challenge(name *string, challenge *[]byte) os.Error {
 		}
 	}
 
-	if challenge == nil {
-		*challenge = make([]byte, 512)
-	}
+	*challenge = make([]byte, 512)
+	n, err := rand.Read(*challenge)
 
-	if cap(*challenge) < 512 {
-		return os.NewError("Challenge too small.")
-	}
-
-	_, err := rand.Read(*challenge)
-
-	if err != nil {
-		panic("Random not random")
+	if err != nil || n != 512 {
+		panic("Challenge Generation Failed")
 	}
 
 	userMap[*name].SChallenge = *challenge
@@ -162,18 +155,19 @@ func checkUser(name string) bool {
 }
 
 
-func verify(a Auth, d Byter) (bool, os.Error) {
+func verify(a *Auth, d Byter) (bool, os.Error) {
 	cMutex.Lock()
-	mac := hmac.New(sha512.New, []byte(config.Sekritz[a.Name]))
+	mac := hmac.New(sha512.New, []byte(config.Sekritz[(*a).Name]))
 	cMutex.Unlock()
-	mac.Write([]byte(a.Name))
-	mac.Write(a.CChallenge)
+
+	mac.Write([]byte((*a).Name))
+	mac.Write((*a).CChallenge)
 	mac.Write(d.Byte())
-	mac.Write(a.SChallenge)
-	if subtle.ConstantTimeCompare(mac.Sum(), a.Mac) == 1 {
-		return true, os.NewError("Authentication Failed")
+	mac.Write(userMap[(*a).Name].SChallenge)
+	if subtle.ConstantTimeCompare(mac.Sum(), (*a).Mac) == 1 {
+		return true, nil
 	}
-	return false, nil
+	return false, os.NewError("Authentication Failed")
 }
 
 
