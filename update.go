@@ -13,7 +13,7 @@ import (
 */
 const (
 	currentVersionUrl = "http://github.com/hgp/Go2Lunch/raw/master/VERSION"
-	downloadUrl = "http://github.com/downloads/hgp/Go2Lunch/lunch"
+	downloadUrl = "http://github.com/downloads/hgp/Go2Lunch/lunch_"
 )
 
 func getCurrentVersion() (string, os.Error) {
@@ -32,7 +32,7 @@ func getCurrentVersion() (string, os.Error) {
 	}
 	
 	res.Body.Close()
-	return fmt.Sprintf("%s", buf), nil
+	return strings.TrimSpace(fmt.Sprintf("%s", buf)), nil
 }
 
 func needsUpdate() (bool, os.Error) {
@@ -59,8 +59,9 @@ func CheckForUpdates() (err os.Error) {
 		
 		switch strings.ToLower(result) {
 		case "", "y":
+			version, _ := getCurrentVersion()
 			fmt.Println("Automatic downloading of updates is not available yet.")
-			fmt.Println("You can download the new version at", downloadUrl)
+			fmt.Println("You can download the new version at", downloadUrl + version)
 			fmt.Println()
 			return
 		}
