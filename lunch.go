@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	configFile    = "config"
-	templateFile  = "template"
+	configFile   = "config"
+	templateFile = "template"
 )
 
 const (
@@ -36,7 +36,7 @@ const (
 	badRandom = "Random NOT random"
 )
 
-const clientVersion = "0.01"
+const clientVersion = "0.02"
 
 var add = flag.Bool("a", false, "add a place")
 var del = flag.Bool("rm", false, "remove a place")
@@ -64,9 +64,9 @@ func main() {
 			}
 		}
 	}()
-	
+
 	flag.Parse()
-	
+
 	// Check for new versions of the client application.
 	if !*noup {
 		err := CheckForUpdates()
@@ -74,7 +74,7 @@ func main() {
 			panic(err)
 		}
 	}
-	
+
 	err := getConfig()
 	if err != nil {
 		err = genConfig()
@@ -293,7 +293,7 @@ func genConfig() (err os.Error) {
 	sekrit = config["sekrit"]
 	host = config["host"]
 	home := os.Getenv("HOME")
-	
+
 	confPath := path.Join(home, ".lunch")
 	if err = os.MkdirAll(confPath, 0700); err != nil {
 		return
