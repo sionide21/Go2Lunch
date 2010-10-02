@@ -8,5 +8,5 @@ sleep 3
 
 echo cp $replacement_path $lunch_path
 cp $replacement_path $lunch_path
-chmod u+x $replacement_path
+chmod u+x $lunch_path
 echo Updated version installed.
