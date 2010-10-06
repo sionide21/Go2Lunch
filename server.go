@@ -17,7 +17,9 @@ import (
 	"strconv"
 )
 
-var port = flag.Uint("p", 1234, "port")
+var port = flag.Uint("p", 1234, "Specifies the port to listen on.")
+var configFile = flag.String("c", "config.json", "Specify a config file.")
+var displayHelp = flag.Bool("help", false, "Displays this help message.")
 
 type ServerConfig struct {
 	Sekritz map[string]string
@@ -31,17 +33,9 @@ var userMap map[string]*Auth
 var config *ServerConfig
 var cMutex sync.Mutex
 
-func init() {
-	userMap = make(map[string]*Auth)
-	err := loadUsersFromFile()
-	if err != nil {
-		panic(err)
-	}
-}
-
 func loadUsersFromFile() (err os.Error) {
 	tempConfig := &ServerConfig{}
-	read, err := ioutil.ReadFile("config.json")
+	read, err := ioutil.ReadFile(*configFile)
 	if err != nil {
 		return err
 	}
@@ -180,6 +174,18 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 
 func main() {
 	flag.Parse()
+
+    if *displayHelp {
+        flag.PrintDefaults()
+        return
+    }
+
+	userMap = make(map[string]*Auth)
+	err := loadUsersFromFile()
+	if err != nil {
+		log.Exit("Error reading config file. Have you created it?\nCoused By: ", err)
+	}
+
 	t := &LunchTracker{NewPoll()}
 	rpc.Register(t)
 	rpc.HandleHTTP()

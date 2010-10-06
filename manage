@@ -1,0 +1,66 @@
+#! /usr/bin/env ruby
+
+require 'rubygems'
+require 'json'
+
+$configFile = "config.json"
+$config = {}
+
+def printUsers()
+    $config['Sekritz'].keys.each do |user|
+        puts user
+    end
+end
+
+def save()
+    File.open $configFile, 'w' do |file|
+        file.write $config.to_json
+    end
+end
+
+def create()
+    $config = {"Sekritz" => {}}
+    save()
+end
+
+
+if not File.exist? $configFile
+    puts "#{$configFile} does not exist. Create it?"
+    str = $stdin.gets.strip.downcase
+    if ['yes', 'y', 'ok'].include? str
+        create
+    else
+        puts "Cancelling"
+        exit
+    end
+end
+
+File.open $configFile do |file|
+    $config = JSON.parse file.read
+end
+
+
+if ARGV.length == 0
+    printUsers()
+elsif ARGV[0].downcase == 'add'
+    str = $stdin.gets
+    user = JSON.parse "{#{str}}"
+    name = user.keys[0]
+    key = user[name]
+
+    if $config['Sekritz'].key? name
+        puts "#{name} already added!"
+    else
+        $config['Sekritz'][name] = key
+        save()
+        puts "\n\nAdded #{name}"
+    end
+elsif ARGV[0].downcase == 'rm'
+    if $config['Sekritz'].key? ARGV[1]
+        puts "Deleting #{ARGV[1]}"
+        $config['Sekritz'].delete ARGV[1]
+        save()
+    else
+        puts "Cannot Find #{ARGV[1]}"
+    end
+end
