@@ -157,8 +157,15 @@ func checkUser(name string) bool {
 
 func verify(a *Auth, d Byter) (bool, os.Error) {
 	cMutex.Lock()
-	mac := hmac.New(sha512.New, []byte(config.Sekritz[(*a).Name]))
+	// Is this lock at all necessary?
+	key, ok := config.Sekritz[(*a).Name]
 	cMutex.Unlock()
+
+	if !ok {
+		return false, os.NewError("Unknown User")
+	}
+
+	mac := hmac.New(sha512.New, []byte(key))
 
 	mac.Write([]byte((*a).Name))
 	mac.Write((*a).CChallenge)
