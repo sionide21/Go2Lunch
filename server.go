@@ -175,10 +175,10 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 func main() {
 	flag.Parse()
 
-    if *displayHelp {
-        flag.PrintDefaults()
-        return
-    }
+	if *displayHelp {
+		flag.PrintDefaults()
+		return
+	}
 
 	userMap = make(map[string]*Auth)
 	err := loadUsersFromFile()
