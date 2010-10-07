@@ -147,16 +147,6 @@ func (p *LunchPoll) getPlace(dest uint) (*ServerPlace, bool) {
 	return nil, false
 }
 
-func (p *LunchPoll) getDriver(driverId uint) (*Person, bool) {
-	for per := range p.people.Iter() {
-		person, ok := per.(*Person)
-		if ok {
-			return person, true
-		}
-	}
-	return nil, false
-}
-
 func (p *LunchPoll) remove(sp *ServerPlace) bool {
 	place := p.places.Front()
 	for {
