@@ -48,6 +48,7 @@ var walk = flag.Bool("w", false, "not driving")
 var debug = flag.Bool("g", false, "debug")
 var noup = flag.Bool("p", false, "disable automatic update checks")
 var version = flag.Bool("v", false, "show current version")
+var printJson = flag.Bool("json", false, "display output in json")
 var sekrit = ""
 var user = ""
 var host = ""
@@ -116,8 +117,16 @@ func main() {
 	}
 
 	if places != nil {
-		for _, p := range *places {
-			ppPlace(&p)
+		if *printJson {
+			out, err := json.Marshal(places)
+			if err != nil {
+				panic(err.String())
+			}
+			fmt.Println(string(out))
+		} else {
+			for _, p := range *places {
+				ppPlace(&p)
+			}
 		}
 	}
 
