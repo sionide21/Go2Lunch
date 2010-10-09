@@ -236,7 +236,7 @@ func (t *LunchServer) undrive() {
 }
 
 func (t *LunchServer) calcAuth(d Byter) (a *Auth) {
-	var challenge []byte
+	var challenge *Bin
 	err := t.Call("LunchTracker.Challenge", &user, &challenge)
 	if err != nil {
 		panic(err)
@@ -327,18 +327,19 @@ func makeSekrit() *[]byte {
 
 func sum(d Byter, a *Auth) {
 
-	challenge := make([]byte, 512)
+	challenge := make(Bin, 512)
 	_, err := rand.Read(challenge)
 
 	if err != nil {
 		panic(badRandom)
 	}
-	(*a).CChallenge = challenge
+	(*a).CChallenge = &challenge
 
 	mac := hmac.New(sha512.New, []byte(sekrit))
 	mac.Write([]byte((*a).Name))
-	mac.Write((*a).CChallenge)
+	mac.Write(*(*a).CChallenge)
 	mac.Write(d.Byte())
-	mac.Write((*a).SChallenge)
-	(*a).Mac = mac.Sum()
+	mac.Write(*(*a).SChallenge)
+	bin := Bin(mac.Sum())
+	(*a).Mac = &bin
 }
