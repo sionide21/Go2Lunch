@@ -2,8 +2,8 @@ package main
 
 import (
 	"rpc"
+	"rpc/jsonrpc"
 	"log"
-	"http"
 	"net"
 	"os"
 	"crypto/hmac"
@@ -188,10 +188,16 @@ func main() {
 
 	t := &LunchTracker{NewPoll()}
 	rpc.Register(t)
-	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":"+strconv.Uitoa(*port))
 	if e != nil {
 		log.Exit("listen error:", e)
 	}
-	http.Serve(l, nil)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			log.Stderr(err)
+		} else {
+			go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
+		}
+	}
 }
