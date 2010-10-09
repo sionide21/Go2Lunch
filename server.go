@@ -19,6 +19,7 @@ import (
 
 var port = flag.Uint("p", 1234, "Specifies the port to listen on.")
 var configFile = flag.String("c", "config.json", "Specify a config file.")
+var dataFile = flag.String("d", "data.json", "Specify a data file for persistence.")
 var displayHelp = flag.Bool("help", false, "Displays this help message.")
 
 type ServerConfig struct {
@@ -49,6 +50,16 @@ func loadUsersFromFile() (err os.Error) {
 	config = tempConfig
 	cMutex.Unlock()
 	return nil
+}
+
+func saveDataToFile(t *LunchTracker) (err os.Error) {
+	data, err := json.Marshal(t.LunchPoll)
+	if err != nil {
+		return
+	}
+	
+	err = ioutil.WriteFile(*dataFile, data, 0600)
+	return
 }
 
 func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *uint) os.Error {
@@ -112,7 +123,8 @@ func (t *LunchTracker) DisplayPlaces(args *EmptyArgs, response *[]Place) os.Erro
 		return ive
 	}
 	*response = t.LunchPoll.displayPlaces()
-	return nil
+	
+	return saveDataToFile(t)
 }
 
 

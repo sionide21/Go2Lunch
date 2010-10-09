@@ -2,6 +2,8 @@ package main
 
 import (
 	"container/list"
+	"os"
+	"json"
 )
 
 type ServerPlace struct {
@@ -163,6 +165,12 @@ func (p *LunchPoll) remove(sp *ServerPlace) bool {
 		place = place.Next()
 	}
 	return false
+}
+
+func (p *LunchPoll) MarshalJSON() ([]byte, os.Error) {
+	return json.Marshal(map[string]interface{}{
+		"places":p.displayPlaces(),
+		"indexCounter":p.indexCounter})
 }
 
 func flattenPlace(server *ServerPlace) (place Place) {
