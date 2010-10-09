@@ -37,7 +37,7 @@ const (
 	badRandom = "Random NOT random"
 )
 
-const clientVersion = "0.02"
+const clientVersion = "0.03"
 
 var add = flag.Bool("a", false, "add a place")
 var del = flag.Bool("rm", false, "remove a place")
