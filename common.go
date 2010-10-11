@@ -3,6 +3,8 @@ package main
 import (
 	"strconv"
 	"bytes"
+	"encoding/base64"
+	"os"
 )
 
 type Byter interface {
@@ -61,9 +63,30 @@ type Place struct {
 	Nominator *Person
 }
 
+type Bin []byte
+
+func (b Bin) MarshalJSON() ([]byte, os.Error) {
+	encoded := make([]byte, 2+base64.StdEncoding.EncodedLen(len(b)))
+	base64.StdEncoding.Encode(encoded[1:], b)
+	encoded[0] = '"'
+	encoded[len(encoded)-1] = '"'
+	return encoded, nil
+}
+
+func (b *Bin) UnmarshalJSON(val []byte) os.Error {
+	data := val[1 : len(val)-1]
+	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(data)))
+	n, err := base64.StdEncoding.Decode(decoded, data)
+	if err != nil {
+		return err
+	}
+	*b = decoded[0:n]
+	return nil
+}
+
 type Auth struct {
 	Name                        string
-	Mac, CChallenge, SChallenge []byte
+	Mac, CChallenge, SChallenge *Bin
 }
 
 func (p *Place) String() string {

@@ -2,8 +2,8 @@ package main
 
 import (
 	"rpc"
+	"rpc/jsonrpc"
 	"log"
-	"http"
 	"net"
 	"os"
 	"crypto/hmac"
@@ -128,7 +128,7 @@ func (t *LunchTracker) DisplayPlaces(args *EmptyArgs, response *[]Place) os.Erro
 }
 
 
-func (t *LunchTracker) Challenge(name *string, challenge *[]byte) os.Error {
+func (t *LunchTracker) Challenge(name *string, challenge *Bin) os.Error {
 	_, valid := userMap[(*name)]
 	if !valid {
 		valid = checkUser(*name)
@@ -144,7 +144,7 @@ func (t *LunchTracker) Challenge(name *string, challenge *[]byte) os.Error {
 		panic("Challenge Generation Failed")
 	}
 
-	userMap[*name].SChallenge = *challenge
+	userMap[*name].SChallenge = challenge
 	return nil
 }
 
@@ -154,7 +154,8 @@ func checkUser(name string) bool {
 	_, valid := config.Sekritz[name]
 	cMutex.Unlock()
 	if valid {
-		userMap[name] = &Auth{Name: name, SChallenge: make([]byte, 512)}
+		sc := make(Bin, 512)
+		userMap[name] = &Auth{Name: name, SChallenge: &sc}
 	}
 
 	return valid
@@ -174,10 +175,10 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 	mac := hmac.New(sha512.New, []byte(key))
 
 	mac.Write([]byte((*a).Name))
-	mac.Write((*a).CChallenge)
+	mac.Write(*(*a).CChallenge)
 	mac.Write(d.Byte())
-	mac.Write(userMap[(*a).Name].SChallenge)
-	if subtle.ConstantTimeCompare(mac.Sum(), (*a).Mac) == 1 {
+	mac.Write(*userMap[(*a).Name].SChallenge)
+	if subtle.ConstantTimeCompare(mac.Sum(), *(*a).Mac) == 1 {
 		return true, nil
 	}
 	return false, os.NewError("Authentication Failed")
@@ -187,10 +188,10 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 func main() {
 	flag.Parse()
 
-    if *displayHelp {
-        flag.PrintDefaults()
-        return
-    }
+	if *displayHelp {
+		flag.PrintDefaults()
+		return
+	}
 
 	userMap = make(map[string]*Auth)
 	err := loadUsersFromFile()
@@ -200,10 +201,16 @@ func main() {
 
 	t := &LunchTracker{NewPoll()}
 	rpc.Register(t)
-	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":"+strconv.Uitoa(*port))
 	if e != nil {
 		log.Exit("listen error:", e)
 	}
-	http.Serve(l, nil)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			log.Stderr(err)
+		} else {
+			go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
+		}
+	}
 }
