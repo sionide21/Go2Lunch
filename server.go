@@ -52,8 +52,18 @@ func loadUsersFromFile() (err os.Error) {
 	return nil
 }
 
+func loadDataFromFile(t *LunchTracker) (err os.Error) {
+	read, err := ioutil.ReadFile(*dataFile)
+	if err != nil {
+		return nil // Don't error out if the file doesn't exist
+	}
+	
+	err = json.Unmarshal(read, &t.LunchPoll)
+	return
+}
+
 func saveDataToFile(t *LunchTracker) (err os.Error) {
-	data, err := json.Marshal(t.LunchPoll)
+	data, err := json.MarshalIndent(t.LunchPoll, "", "  ")
 	if err != nil {
 		return
 	}
@@ -196,10 +206,14 @@ func main() {
 	userMap = make(map[string]*Auth)
 	err := loadUsersFromFile()
 	if err != nil {
-		log.Exit("Error reading config file. Have you created it?\nCoused By: ", err)
+		log.Exit("Error reading config file. Have you created it?\nCaused By: ", err)
 	}
 
 	t := &LunchTracker{NewPoll()}
+	err = loadDataFromFile(t)
+	if err != nil {
+		log.Exit("Error reading data file.\nCaused by: ", err)
+	}
 	rpc.Register(t)
 	l, e := net.Listen("tcp", ":"+strconv.Uitoa(*port))
 	if e != nil {

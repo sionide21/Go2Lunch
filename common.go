@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"os"
+	"json"
+	"fmt"
 )
 
 type Byter interface {
@@ -55,12 +57,26 @@ func (p *Person) String() string {
 	return str
 }
 
+func (p *Person) UnmarshalJSON(data []byte) os.Error {
+	person := make(map[string]interface{})
+	err := json.Unmarshal(data, &person)
+	fmt.Println("JSON:", person)
+	return err
+}
+
 type Place struct {
 	Id        uint
 	Name      string
 	Votes     uint
 	People    []*Person
 	Nominator *Person
+}
+
+func (p *Place) UnmarshalJSON(data []byte) os.Error {
+	place := make(map[string]interface{})
+	err := json.Unmarshal(data, &place)
+	fmt.Println("JSON:", place)
+	return err
 }
 
 type Bin []byte
