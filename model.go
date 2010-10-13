@@ -3,6 +3,7 @@ package main
 import (
 	"container/vector"
 	"os"
+	"fmt"
 	"json"
 )
 
@@ -154,10 +155,16 @@ func (p *LunchPoll) remove(sp *ServerPlace) bool {
 	return false
 }
 
-func (p *LunchPoll) MarshalJSON() ([]byte, os.Error) {
-	return json.Marshal(map[string]interface{}{
-		"places":p.displayPlaces(),
-		"indexCounter":p.indexCounter})
+// func (p *LunchPoll) MarshalJSON() ([]byte, os.Error) {
+// 	return json.Marshal(map[string]interface{}{
+// 		"places":p.displayPlaces(),
+// 		"indexCounter":p.indexCounter})
+// }
+func (p *LunchPoll) UnmarshalJSON(data []byte) os.Error {
+	poll := make(map[string]interface{})
+	err := json.Unmarshal(data, &poll)
+	fmt.Println("JSON:", poll)
+	return err
 }
 
 func flattenPlace(server *ServerPlace) (place Place) {
