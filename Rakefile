@@ -1,7 +1,8 @@
 common = ['common.go']
 
 $exes = {
-    'server' => common + ['model.go'], 
+    'server' => common + ['model.go', 'lunchTracker.go'], 
+
     'lunch' => common + ['update.go']
 }
 

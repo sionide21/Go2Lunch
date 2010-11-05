@@ -1,9 +1,7 @@
 package main
-
 import (
 	"container/vector"
 )
-
 type LunchPoll struct {
 	places       vector.Vector
 	people       vector.Vector
@@ -11,8 +9,8 @@ type LunchPoll struct {
 	votes        map[string]*Place
 }
 
-func NewPoll() *LunchPoll {
-	return &LunchPoll{
+func NewPoll() LunchPoll {
+	return LunchPoll{
 		places:       make(vector.Vector, 5),
 		people:       make(vector.Vector, 5),
 		votes:        make(map[string]*Place),
@@ -23,10 +21,10 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 	person := p.getPerson(nominator)
 	if person.NominationsLeft > 0 {
 		place := &Place{
-			Id:        p.indexCounter,
-			Nominator: person,
-			Name:      name,
-			People:    make(vector.Vector, 3)}
+				Id:        p.indexCounter,
+				Nominator: person,
+				Name:      name,
+				People: make(vector.Vector, 3)}
 		p.places.Push(place)
 		defer func() { p.indexCounter++ }()
 		person.NominationsLeft--
@@ -112,7 +110,7 @@ func (p *LunchPoll) getPlace(dest uint) (*Place, bool) {
 }
 
 func (p *LunchPoll) remove(sp *Place) bool {
-	for i, place := range p.places {
+	for i, place := range p.places{
 		if place == nil {
 			return false
 		}

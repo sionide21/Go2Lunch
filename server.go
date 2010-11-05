@@ -25,10 +25,6 @@ type ServerConfig struct {
 	Sekritz map[string]string
 }
 
-type LunchTracker struct {
-	*LunchPoll
-}
-
 var userMap map[string]*Auth
 var config *ServerConfig
 var cMutex sync.Mutex
@@ -51,72 +47,7 @@ func loadUsersFromFile() (err os.Error) {
 	return nil
 }
 
-func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *uint) os.Error {
-	valid, ive := verify(&args.Auth, args)
-	if !valid {
-		return ive
-	}
-	*place = t.LunchPoll.addPlace(args.Name, args.Auth.Name)
-	return nil
-}
-
-func (t *LunchTracker) DelPlace(args *UIntArgs, success *bool) os.Error {
-	valid, ive := verify(&args.Auth, args)
-	if !valid {
-		return ive
-	}
-	*success = t.LunchPoll.delPlace(args.Num)
-	return nil
-}
-
-func (t *LunchTracker) Drive(args *UIntArgs, success *bool) os.Error {
-	valid, ive := verify(&args.Auth, args)
-	if !valid {
-		return ive
-	}
-	*success = t.LunchPoll.drive(args.Auth.Name, args.Num)
-	return nil
-}
-
-func (t *LunchTracker) UnDrive(args *EmptyArgs, success *bool) os.Error {
-	valid, ive := verify(&args.Auth, args)
-	if !valid {
-		return ive
-	}
-	*success = t.LunchPoll.unDrive(args.Auth.Name)
-	return nil
-}
-
-func (t *LunchTracker) Vote(args *UIntArgs, success *bool) os.Error {
-	valid, ive := verify(&args.Auth, args)
-	if !valid {
-		return ive
-	}
-
-	*success = t.LunchPoll.vote(args.Auth.Name, args.Num)
-	return nil
-}
-
-func (t *LunchTracker) UnVote(args *EmptyArgs, success *bool) os.Error {
-	valid, ive := verify(&args.Auth, args)
-	if !valid {
-		return ive
-	}
-	*success = t.LunchPoll.unVote(args.Auth.Name)
-	return nil
-}
-
-func (t *LunchTracker) DisplayPlaces(args *EmptyArgs, response **LunchPoll) os.Error {
-	valid, ive := verify(&args.Auth, args)
-	if !valid {
-		return ive
-	}
-	*response = t.LunchPoll
-	return nil
-}
-
-
-func (t *LunchTracker) Challenge(name *string, challenge *[]byte) os.Error {
+func Challenge(name *string, challenge *[]byte) os.Error {
 	_, valid := userMap[(*name)]
 	if !valid {
 		valid = checkUser(*name)
@@ -151,7 +82,6 @@ func checkUser(name string) bool {
 
 func verify(a *Auth, d Byter) (bool, os.Error) {
 	cMutex.Lock()
-	// Is this lock at all necessary?
 	key, ok := config.Sekritz[(*a).Name]
 	cMutex.Unlock()
 
@@ -179,14 +109,13 @@ func main() {
 		flag.PrintDefaults()
 		return
 	}
-
 	userMap = make(map[string]*Auth)
 	err := loadUsersFromFile()
 	if err != nil {
 		log.Exit("Error reading config file. Have you created it?\nCoused By: ", err)
 	}
 
-	t := &LunchTracker{NewPoll()}
+	t := &LunchTracker{newPollChan()}
 	rpc.Register(t)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":"+strconv.Uitoa(*port))
@@ -194,4 +123,15 @@ func main() {
 		log.Exit("listen error:", e)
 	}
 	http.Serve(l, nil)
+}
+
+func newPollChan() chan *LunchPoll {
+	ch := make(chan *LunchPoll)
+	poll := NewPoll()
+	go func() {
+		for {
+			ch <- poll
+			poll <- ch
+		}
+	}()
 }
