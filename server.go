@@ -162,6 +162,7 @@ func (t *LunchTracker) DisplayPlaces(args *EmptyArgs, response **LunchPoll) os.E
 
 
 func (t *LunchTracker) Challenge(name *string, challenge *Bin) os.Error {
+	log.Print("FUCK 1")
 	_, valid := userMap[(*name)]
 	if !valid {
 		valid = checkUser(*name)
@@ -169,6 +170,8 @@ func (t *LunchTracker) Challenge(name *string, challenge *Bin) os.Error {
 			return nil
 		}
 	}
+
+	log.Print("FUCK 2")
 
 	*challenge = make(Bin, 512)
 	n, err := rand.Read(*challenge)
@@ -219,6 +222,7 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 
 
 func main() {
+	log.SetOutput(os.Stderr)
 	flag.Parse()
 
 	if *displayHelp {
@@ -232,6 +236,8 @@ func main() {
 		log.Exit("Error reading config file. Have you created it?\nCoused By: ", err)
 	}
 
+	log.Print("FUCK 3")
+
 	t := &LunchTracker{NewPoll()}
 	rpc.Register(t)
 	rpc.HandleHTTP()
@@ -239,5 +245,6 @@ func main() {
 	if e != nil {
 		log.Exit("listen error:", e)
 	}
+	log.Print("FUCK 4")
 	http.Serve(l, nil)
 }

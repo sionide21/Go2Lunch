@@ -95,7 +95,7 @@ func main() {
 	remote := &LunchServer{r}
 
 	dest, err := strconv.Atoui(flag.Arg(0))
-	var places *[]Place
+	var poll *LunchPoll
 
 	switch {
 	case *version:
@@ -114,19 +114,19 @@ func main() {
 	case dest != 0:
 		remote.vote(dest)
 	default:
-		places = remote.displayPlaces()
+		poll = remote.displayPlaces()
 	}
 
-	if places != nil {
+	if poll != nil {
 		if *printJson {
-			out, err := json.Marshal(places)
+			out, err := json.Marshal(poll)
 			if err != nil {
 				panic(err.String())
 			}
 			fmt.Println(string(out))
 		} else {
-			for _, p := range *places {
-				ppPlace(&p)
+			for _, p := range poll.places {
+				ppPlace(p.(*Place))
 			}
 		}
 	}
@@ -210,15 +210,15 @@ func (t *LunchServer) unvote() {
 	return
 }
 
-func (t *LunchServer) displayPlaces() *[]Place {
+func (t *LunchServer) displayPlaces() *LunchPoll {
 	args := &EmptyArgs{}
 	args.Auth = *(t.calcAuth(args))
-	var places []Place
-	err := t.Call("LunchTracker.DisplayPlaces", args, &places)
+	var poll LunchPoll
+	err := t.Call("LunchTracker.DisplayPlaces", args, &poll)
 	if err != nil && err != os.EOF {
 		panic(err)
 	}
-	return &places
+	return &poll
 }
 
 func (t *LunchServer) undrive() {
@@ -236,12 +236,12 @@ func (t *LunchServer) undrive() {
 }
 
 func (t *LunchServer) calcAuth(d Byter) (a *Auth) {
-	var challenge *Bin
+	var challenge Bin
 	err := t.Call("LunchTracker.Challenge", &user, &challenge)
 	if err != nil {
 		panic(err)
 	}
-	a = &Auth{Name: user, SChallenge: challenge}
+	a = &Auth{Name: user, SChallenge: &challenge}
 	sum(d, a)
 	return
 

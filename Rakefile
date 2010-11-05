@@ -1,7 +1,7 @@
-common = ['common.go']
+common = ['common.go', 'model.go']
 
 $exes = {
-    'server' => common + ['model.go'], 
+    'server' => common, 
     'lunch' => common + ['update.go']
 }
 
