@@ -174,6 +174,8 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 
 
 func main() {
+	log.SetOutput(os.Stderr)
+	
 	flag.Parse()
 
 	if *displayHelp {
@@ -196,7 +198,7 @@ func main() {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Stderr(err)
+			log.Print(err)
 		} else {
 			go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
 		}
