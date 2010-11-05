@@ -105,7 +105,7 @@ func (p *Place) removePerson(name string) bool {
 		if ok && person.Name == name {
 			p.People.Delete(i)
 			return true
-		}	
+		}
 	}
 	return false
 }

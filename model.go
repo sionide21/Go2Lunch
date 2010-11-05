@@ -1,18 +1,20 @@
 package main
+
 import (
-	"container/list"
+	"container/vector"
 )
+
 type LunchPoll struct {
-	places       *vector.Vector
-	people       *vector.Vector
+	places       vector.Vector
+	people       vector.Vector
 	indexCounter uint
 	votes        map[string]*Place
 }
 
 func NewPoll() *LunchPoll {
 	return &LunchPoll{
-		places:       list.New(),
-		people:       list.New(),
+		places:       make(vector.Vector, 5),
+		people:       make(vector.Vector, 5),
 		votes:        make(map[string]*Place),
 		indexCounter: 1}
 }
@@ -21,12 +23,10 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 	person := p.getPerson(nominator)
 	if person.NominationsLeft > 0 {
 		place := &Place{
-			Place{
-				Id:        p.indexCounter,
-				Nominator: person,
-				Name:      name},
-			list.New()}
-
+			Id:        p.indexCounter,
+			Nominator: person,
+			Name:      name,
+			People:    make(vector.Vector, 3)}
 		p.places.Push(place)
 		defer func() { p.indexCounter++ }()
 		person.NominationsLeft--
@@ -68,7 +68,7 @@ func (p *LunchPoll) vote(who string, vote uint) bool {
 		if p.votes[who] == nil {
 			p.votes[who] = place
 			place.Votes++
-			place.PeopleList.Push(person)
+			place.People.Push(person)
 			return true
 		}
 	}
@@ -79,21 +79,17 @@ func (p *LunchPoll) unVote(who string) bool {
 	if place, voted := p.votes[who]; voted {
 		place.Votes--
 		p.votes[who] = nil, false
-		place.remove(who)
+		place.removePerson(who)
 		return true
 	}
 	return false
 }
 
-func (p *LunchPoll) displayPlaces() []Place {
-	return places
-}
-
 // Helpers
 func (p *LunchPoll) getPerson(name string) *Person {
-	for p := range p.people.Iter() {
-		person, _ := p.(*Person)
-		if person.Name == name {
+	for _, peep := range p.people {
+		person, ok := peep.(*Person)
+		if ok && person.Name == name {
 			return person
 		}
 	}
@@ -106,7 +102,7 @@ func (p *LunchPoll) getPerson(name string) *Person {
 }
 
 func (p *LunchPoll) getPlace(dest uint) (*Place, bool) {
-	for pl := range p.places.Iter() {
+	for _, pl := range p.places {
 		place, _ := pl.(*Place)
 		if place.Id == dest {
 			return place, true
@@ -116,19 +112,16 @@ func (p *LunchPoll) getPlace(dest uint) (*Place, bool) {
 }
 
 func (p *LunchPoll) remove(sp *Place) bool {
-	place := p.places.Front()
-	for {
+	for i, place := range p.places {
 		if place == nil {
 			return false
 		}
 
-		pl, _ := place.Value.(*Place)
-		if pl.Id == sp.Id {
-			p.places.Remove(place)
+		pl, ok := place.(*Place)
+		if ok && pl.Id == sp.Id {
+			p.places.Delete(i)
 			return true
 		}
-
-		place = place.Next()
 	}
 	return false
 }
