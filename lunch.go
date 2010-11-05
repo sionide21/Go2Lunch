@@ -4,6 +4,7 @@ import (
 	"flag"
 	"strconv"
 	"rpc"
+	"rpc/jsonrpc"
 	"fmt"
 	"strings"
 	"os"
@@ -36,7 +37,7 @@ const (
 	badRandom = "Random NOT random"
 )
 
-const clientVersion = "0.02"
+const clientVersion = "0.03"
 
 var add = flag.Bool("a", false, "add a place")
 var del = flag.Bool("rm", false, "remove a place")
@@ -86,7 +87,7 @@ func main() {
 		return
 	}
 
-	r, e := rpc.DialHTTP("tcp", host)
+	r, e := jsonrpc.Dial("tcp", host)
 	if e != nil {
 		fmt.Println("Cannot connect to server: " + host)
 		os.Exit(-1)
@@ -235,7 +236,7 @@ func (t *LunchServer) undrive() {
 }
 
 func (t *LunchServer) calcAuth(d Byter) (a *Auth) {
-	var challenge []byte
+	var challenge *Bin
 	err := t.Call("LunchTracker.Challenge", &user, &challenge)
 	if err != nil {
 		panic(err)
@@ -326,18 +327,19 @@ func makeSekrit() *[]byte {
 
 func sum(d Byter, a *Auth) {
 
-	challenge := make([]byte, 512)
+	challenge := make(Bin, 512)
 	_, err := rand.Read(challenge)
 
 	if err != nil {
 		panic(badRandom)
 	}
-	(*a).CChallenge = challenge
+	(*a).CChallenge = &challenge
 
 	mac := hmac.New(sha512.New, []byte(sekrit))
 	mac.Write([]byte((*a).Name))
-	mac.Write((*a).CChallenge)
+	mac.Write(*(*a).CChallenge)
 	mac.Write(d.Byte())
-	mac.Write((*a).SChallenge)
-	(*a).Mac = mac.Sum()
+	mac.Write(*(*a).SChallenge)
+	bin := Bin(mac.Sum())
+	(*a).Mac = &bin
 }
