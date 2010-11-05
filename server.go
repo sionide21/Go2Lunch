@@ -15,10 +15,13 @@ import (
 	"json"
 	"flag"
 	"strconv"
+	// "fmt"
+	"gob"
 )
 
 var port = flag.Uint("p", 1234, "Specifies the port to listen on.")
 var configFile = flag.String("c", "config.json", "Specify a config file.")
+var dataFile = flag.String("d", "data.gob", "Specify a data file.")
 var displayHelp = flag.Bool("help", false, "Displays this help message.")
 
 type ServerConfig struct {
@@ -49,6 +52,48 @@ func loadUsersFromFile() (err os.Error) {
 	config = tempConfig
 	cMutex.Unlock()
 	return nil
+}
+
+func loadDataFromFile(t *LunchTracker) (err os.Error) {
+	// read, err := ioutil.ReadFile(*dataFile)
+	// if err != nil {
+	// 	return nil // Don't error out if the file doesn't exist
+	// }
+	// 
+	// err = json.Unmarshal(read, t.LunchPoll)
+	// fmt.Println(t.LunchPoll)
+
+	file, err := os.Open(*dataFile, os.O_RDONLY, 0)
+	if err != nil {
+		return nil
+	}
+	defer file.Close()
+
+	dec := gob.NewDecoder(file)
+	err = dec.Decode(t.LunchPoll)
+
+	return
+}
+
+func saveDataToFile(t *LunchTracker) (err os.Error) {
+	// data, err := json.MarshalIndent(t.LunchPoll, "", "  ")
+	// if err != nil {
+	// 	return
+	// }
+	// 
+	// err = ioutil.WriteFile(*dataFile, data, 0600)
+	// return
+
+	file, err := os.Open(*dataFile, os.O_WRONLY|os.O_CREAT|os.O_TRUNC, 0600)
+	if err != nil {
+		return
+	}
+
+	enc := gob.NewEncoder(file)
+	err = enc.Encode(t.LunchPoll)
+	file.Close()
+
+	return
 }
 
 func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *uint) os.Error {
