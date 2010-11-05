@@ -95,7 +95,6 @@ func saveDataToFile(t *LunchTracker) (err os.Error) {
 	return
 }
 
-
 func checkUser(name string) bool {
 	loadUsersFromFile()
 	cMutex.Lock()
@@ -133,6 +132,7 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 
 
 func main() {
+	log.SetOutput(os.Stderr)
 	flag.Parse()
 
 	if *displayHelp {
@@ -144,7 +144,6 @@ func main() {
 	if err != nil {
 		log.Exit("Error reading config file. Have you created it?\nCoused By: ", err)
 	}
-
 	t := LunchTracker(newPollChan())
 	rpc.Register(t)
 	rpc.HandleHTTP()
