@@ -60,7 +60,7 @@ type Place struct {
 	Id        uint
 	Name      string
 	Votes     uint
-	People    *vector.Vector
+	People    vector.Vector
 	Nominator *Person
 }
 
@@ -92,7 +92,7 @@ type Auth struct {
 
 func (p *Place) String() string {
 	str := strconv.Uitoa(p.Id) + ") " + p.Name + " : " + p.Nominator.Name + " [" + strconv.Uitoa(p.Votes) + " votes]"
-	for _, person := range *p.People {
+	for _, person := range p.People {
 		pers := person.(*Person)
 		str += "\n  - " + pers.String()
 	}
@@ -100,7 +100,7 @@ func (p *Place) String() string {
 }
 
 func (p *Place) removePerson(name string) bool {
-	for i, e := range *p.People {
+	for i, e := range p.People {
 		person, ok := e.(*Person)
 		if ok && person.Name == name {
 			p.People.Delete(i)
