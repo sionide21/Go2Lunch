@@ -1,6 +1,9 @@
 package main
 
-import "os"
+import (
+	"os"
+	"crypto/rand"
+)
 
 type LunchTracker chan LunchPoll
 
@@ -80,8 +83,28 @@ func (t *LunchTracker) DisplayPlaces(args *EmptyArgs, response *LunchPoll) os.Er
 	return nil
 }
 
+func (t *LunchTracker) Challenge(name *string, challenge *Bin) os.Error {
+	_, valid := userMap[(*name)]
+	if !valid {
+		valid = checkUser(*name)
+		if !valid {
+			return nil
+		}
+	}
+
+	*challenge = make(Bin, 512)
+	n, err := rand.Read(*challenge)
+
+	if err != nil || n != 512 {
+		panic("Challenge Generation Failed")
+	}
+
+	userMap[*name].SChallenge = challenge
+	return nil
+}
+
 func (t *LunchTracker) getPoll() LunchPoll {
-	return <- *t
+	return <-*t
 }
 
 func (t *LunchTracker) putPoll(l LunchPoll) {
