@@ -1,36 +1,10 @@
 package main
-
 import (
 	"container/list"
 )
-
-type ServerPlace struct {
-	Place
-	PeopleList *list.List
-}
-
-func (t *ServerPlace) remove(p string) bool {
-	person := t.PeopleList.Front()
-
-	for {
-		if person == nil {
-			return false
-		}
-
-		pl, _ := person.Value.(*Person)
-		if pl.Name == p {
-			t.PeopleList.Remove(person)
-			return true
-		}
-
-		person = person.Next()
-	}
-	return false
-}
-
 type LunchPoll struct {
-	places       *list.List
-	people       *list.List
+	places       *vector.Vector
+	people       *vector.Vector
 	indexCounter uint
 	votes        map[string]*ServerPlace
 }
@@ -53,7 +27,7 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 				Name:      name},
 			list.New()}
 
-		p.places.PushBack(place)
+		p.places.Push(place)
 		defer func() { p.indexCounter++ }()
 		person.NominationsLeft--
 	}
@@ -94,7 +68,7 @@ func (p *LunchPoll) vote(who string, vote uint) bool {
 		if p.votes[who] == nil {
 			p.votes[who] = place
 			place.Votes++
-			place.PeopleList.PushBack(person)
+			place.PeopleList.Push(person)
 			return true
 		}
 	}
@@ -112,13 +86,7 @@ func (p *LunchPoll) unVote(who string) bool {
 }
 
 func (p *LunchPoll) displayPlaces() []Place {
-	ret := make([]Place, p.places.Len())
-	var i = 0
-	for place := range p.places.Iter() {
-		ret[i] = flattenPlace(place.(*ServerPlace))
-		i++
-	}
-	return ret
+	return places
 }
 
 // Helpers
@@ -133,7 +101,7 @@ func (p *LunchPoll) getPerson(name string) *Person {
 		CanDrive:        false,
 		Name:            name,
 		NominationsLeft: 2}
-	p.people.PushBack(person)
+	p.people.Push(person)
 	return person
 }
 
@@ -163,20 +131,4 @@ func (p *LunchPoll) remove(sp *ServerPlace) bool {
 		place = place.Next()
 	}
 	return false
-}
-
-func flattenPlace(server *ServerPlace) (place Place) {
-	peeps := make([]*Person, server.PeopleList.Len())
-	place = Place{
-		Id:        server.Id,
-		Name:      server.Name,
-		Votes:     server.Votes,
-		Nominator: server.Nominator,
-		People:    peeps}
-	var i = 0
-	for sperson := range server.PeopleList.Iter() {
-		place.People[i] = sperson.(*Person)
-		i++
-	}
-	return
 }

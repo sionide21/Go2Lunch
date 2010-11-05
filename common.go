@@ -3,6 +3,7 @@ package main
 import (
 	"strconv"
 	"bytes"
+	"container/vector"
 )
 
 type Byter interface {
@@ -57,7 +58,7 @@ type Place struct {
 	Id        uint
 	Name      string
 	Votes     uint
-	People    []*Person
+	People    *vector.Vector
 	Nominator *Person
 }
 
@@ -67,9 +68,20 @@ type Auth struct {
 }
 
 func (p *Place) String() string {
-	str := strconv.Uitoa(p.Id) + ") " + p.Name + " nominated by " + p.Nominator.Name + " [" + strconv.Uitoa(p.Votes) + " votes]"
+	str := strconv.Uitoa(p.Id) + ") " + p.Name + " : " + p.Nominator.Name + " [" + strconv.Uitoa(p.Votes) + " votes]"
 	for _, person := range p.People {
 		str += "\n  - " + person.String()
 	}
 	return str
+}
+
+func (p *Place) removePerson(name string) bool {
+	for i, e := range p.People {
+		person, ok := e.(*Person)
+		if ok && person.Name == name {
+			p.People.Delete(i)
+			return true
+		}	
+	}
+	return false
 }
