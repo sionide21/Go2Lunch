@@ -6,21 +6,21 @@ type LunchPoll struct {
 	places       *vector.Vector
 	people       *vector.Vector
 	indexCounter uint
-	votes        map[string]*ServerPlace
+	votes        map[string]*Place
 }
 
 func NewPoll() *LunchPoll {
 	return &LunchPoll{
 		places:       list.New(),
 		people:       list.New(),
-		votes:        make(map[string]*ServerPlace),
+		votes:        make(map[string]*Place),
 		indexCounter: 1}
 }
 
 func (p *LunchPoll) addPlace(name, nominator string) uint {
 	person := p.getPerson(nominator)
 	if person.NominationsLeft > 0 {
-		place := &ServerPlace{
+		place := &Place{
 			Place{
 				Id:        p.indexCounter,
 				Nominator: person,
@@ -105,9 +105,9 @@ func (p *LunchPoll) getPerson(name string) *Person {
 	return person
 }
 
-func (p *LunchPoll) getPlace(dest uint) (*ServerPlace, bool) {
+func (p *LunchPoll) getPlace(dest uint) (*Place, bool) {
 	for pl := range p.places.Iter() {
-		place, _ := pl.(*ServerPlace)
+		place, _ := pl.(*Place)
 		if place.Id == dest {
 			return place, true
 		}
@@ -115,14 +115,14 @@ func (p *LunchPoll) getPlace(dest uint) (*ServerPlace, bool) {
 	return nil, false
 }
 
-func (p *LunchPoll) remove(sp *ServerPlace) bool {
+func (p *LunchPoll) remove(sp *Place) bool {
 	place := p.places.Front()
 	for {
 		if place == nil {
 			return false
 		}
 
-		pl, _ := place.Value.(*ServerPlace)
+		pl, _ := place.Value.(*Place)
 		if pl.Id == sp.Id {
 			p.places.Remove(place)
 			return true
