@@ -50,6 +50,7 @@ var debug = flag.Bool("g", false, "debug")
 var noup = flag.Bool("p", false, "disable automatic update checks")
 var version = flag.Bool("v", false, "show current version")
 var printJson = flag.Bool("json", false, "display output in json")
+var noVotes = flag.Bool("e", false, "print everyone")
 var sekrit = ""
 var user = ""
 var host = ""
@@ -125,8 +126,10 @@ func main() {
 			}
 			fmt.Println(string(out))
 		} else {
-			for _, p := range poll.places {
-				ppPlace(p.(*Place))
+			for i, p := range poll.places {
+				if i != 0 || *noVotes {
+					ppPlace(p.(*Place))
+				}
 			}
 		}
 	}
