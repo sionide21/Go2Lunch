@@ -6,17 +6,25 @@ import (
 
 type LunchPoll struct {
 	places       vector.Vector
-	people       vector.Vector
 	indexCounter uint
 	votes        map[string]*Place
 }
 
 func NewPoll() LunchPoll {
-	return LunchPoll{
+	poll := LunchPoll{
 		places:       make(vector.Vector, 5),
-		people:       make(vector.Vector, 5),
 		votes:        make(map[string]*Place),
 		indexCounter: 1}
+
+	defaultPlace := Place{
+		Id:        0,
+		Name:      "",
+		Votes:     0,
+		People:    make(vector.Vector, 5),
+		Nominator: nil}
+
+	poll.places.Push(defaultPlace)
+	return poll
 }
 
 func (p *LunchPoll) addPlace(name, nominator string) uint {
@@ -79,25 +87,32 @@ func (p *LunchPoll) unVote(who string) bool {
 	if place, voted := p.votes[who]; voted {
 		place.Votes--
 		p.votes[who] = nil, false
-		place.removePerson(who)
-		return true
+		person := place.RemovePerson(who)
+		if person.Name != "" {
+			people := p.places.At(0).(Place).People
+			people.Push(person)
+			return true
+		}
 	}
 	return false
 }
 
 // Helpers
 func (p *LunchPoll) getPerson(name string) *Person {
-	for _, peep := range p.people {
-		person, ok := peep.(*Person)
-		if ok && person.Name == name {
-			return person
+	for _, place := range p.places {
+		for _, peep := range place.(Place).People {
+			person, ok := peep.(*Person)
+			if ok && person.Name == name {
+				return person
+			}
 		}
 	}
 	person := &Person{
 		CanDrive:        false,
 		Name:            name,
 		NominationsLeft: 2}
-	p.people.Push(person)
+	defaultPeopleVector := p.places.At(0).(Place).People
+	defaultPeopleVector.Push(person)
 	return person
 }
 

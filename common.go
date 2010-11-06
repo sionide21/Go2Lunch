@@ -99,13 +99,13 @@ func (p *Place) String() string {
 	return str
 }
 
-func (p *Place) removePerson(name string) bool {
+func (p *Place) RemovePerson(name string) Person {
 	for i, e := range p.People {
 		person, ok := e.(*Person)
 		if ok && person.Name == name {
-			p.People.Delete(i)
-			return true
+			defer p.People.Delete(i)
+			return p.People.At(i).(Person)
 		}
 	}
-	return false
+	return Person{CanDrive: false, Name: "", NumSeats: 0, NominationsLeft: 0}
 }
