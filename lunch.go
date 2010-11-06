@@ -239,12 +239,12 @@ func (t *LunchServer) undrive() {
 }
 
 func (t *LunchServer) calcAuth(d Byter) (a *Auth) {
-	var challenge Bin
+	var challenge *Bin
 	err := t.Call("LunchTracker.Challenge", &user, &challenge)
 	if err != nil {
 		panic(err)
 	}
-	a = &Auth{Name: user, SChallenge: &challenge}
+	a = &Auth{Name: user, SChallenge: challenge}
 	sum(d, a)
 	return
 
