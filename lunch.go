@@ -126,7 +126,7 @@ func main() {
 			}
 			fmt.Println(string(out))
 		} else {
-			for i, p := range poll.places {
+			for i, p := range poll.Places {
 				if i != 0 || *noVotes {
 					ppPlace(p.(*Place))
 				}
