@@ -132,7 +132,7 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 
 
 func main() {
-	//log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stderr)
 	flag.Parse()
 
 	if *displayHelp {
