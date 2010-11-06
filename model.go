@@ -18,7 +18,7 @@ func NewPoll() LunchPoll {
 
 	defaultPlace := Place{
 		Id:        0,
-		Name:      "",
+		Name:      "No Where",
 		Votes:     0,
 		People:    make(vector.Vector, 5),
 		Nominator: nil}
