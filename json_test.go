@@ -6,14 +6,15 @@ import (
 )
 
 func TestMarshall(t *testing.T) {
-	bin := make(Bin, 10)
+	var bin interface{}
+	bin = make(Bin, 10)
 
 	_, ok := bin.(json.Marshaler)
 	if !ok {
 		t.Fatal("main.Bin not a json.Marshaler")
 	}
 
-	_, ok := bin.(json.Unmarshaler)
+	_, ok = bin.(json.Unmarshaler)
 	if !ok {
 		t.Fatal("main.Bin not a json.Unmarshaler")
 	}
