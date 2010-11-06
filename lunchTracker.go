@@ -88,7 +88,7 @@ func (t *LunchTracker) Challenge(name *string, challenge *Bin) os.Error {
 	if !valid {
 		valid = checkUser(*name)
 		if !valid {
-			return nil
+			return os.NewError("Unknown User")
 		}
 	}
 
