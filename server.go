@@ -132,7 +132,7 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 
 
 func main() {
-	log.SetOutput(os.Stderr)
+	//log.SetOutput(os.Stderr)
 	flag.Parse()
 
 	if *displayHelp {
@@ -144,7 +144,7 @@ func main() {
 	if err != nil {
 		log.Exit("Error reading config file. Have you created it?\nCoused By: ", err)
 	}
-	t := LunchTracker(newPollChan())
+	t := newPollChan()
 	rpc.Register(t)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":"+strconv.Uitoa(*port))
@@ -154,8 +154,8 @@ func main() {
 	http.Serve(l, nil)
 }
 
-func newPollChan() chan LunchPoll {
-	ch := make(chan LunchPoll)
+func newPollChan() *LunchTracker {
+	ch := LunchTracker(make(chan LunchPoll))
 	poll := NewPoll()
 	go func() {
 		for {
@@ -163,5 +163,5 @@ func newPollChan() chan LunchPoll {
 			poll = <-ch
 		}
 	}()
-	return ch
+	return &ch
 }
