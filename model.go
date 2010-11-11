@@ -11,6 +11,10 @@ type LunchPoll struct {
 	Votes        map[string]*Place
 }
 
+func init() {
+	RegisterTypes()
+}
+
 func NewPoll() LunchPoll {
 	poll := LunchPoll{
 		Places:       make(vector.Vector, 0),

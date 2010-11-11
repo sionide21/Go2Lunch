@@ -14,7 +14,6 @@ import (
 	"json"
 	"flag"
 	"strconv"
-	"gob"
 )
 
 var port = flag.Uint("p", 1234, "Specifies the port to listen on.")
@@ -46,53 +45,6 @@ func loadUsersFromFile() (err os.Error) {
 	config = tempConfig
 	cMutex.Unlock()
 	return nil
-}
-
-func loadDataFromFile(t *LunchTracker) (err os.Error) {
-	// read, err := ioutil.ReadFile(*dataFile)
-	// if err != nil {
-	// 	return nil // Don't error out if the file doesn't exist
-	// }
-	// 
-	// err = json.Unmarshal(read, t.LunchPoll)
-	// fmt.Println(t.LunchPoll)
-
-	file, err := os.Open(*dataFile, os.O_RDONLY, 0)
-	if err != nil {
-		return nil
-	}
-	defer file.Close()
-
-	dec := gob.NewDecoder(file)
-	poll := t.getPoll()
-	err = dec.Decode(poll)
-	t.putPoll(poll)
-
-	return
-}
-
-func saveDataToFile(t *LunchTracker) (err os.Error) {
-	// data, err := json.MarshalIndent(t.LunchPoll, "", "  ")
-	// if err != nil {
-	// 	return
-	// }
-	// 
-	// err = ioutil.WriteFile(*dataFile, data, 0600)
-	// return
-
-	file, err := os.Open(*dataFile, os.O_WRONLY|os.O_CREAT|os.O_TRUNC, 0600)
-	if err != nil {
-		return
-	}
-
-	enc := gob.NewEncoder(file)
-
-	poll := t.getPoll()
-	err = enc.Encode(poll)
-	t.putPoll(poll)
-	file.Close()
-
-	return
 }
 
 func checkUser(name string) bool {
@@ -142,11 +94,10 @@ func main() {
 	userMap = make(map[string]*Auth)
 	err := loadUsersFromFile()
 	if err != nil {
-		log.Exit("Error reading config file. Have you created it?\nCoused By: ", err)
+		log.Exit("Error reading config file. Have you created it?\nCaused By: ", err)
 	}
 	t := newPollChan()
 
-	RegisterTypes()
 	rpc.Register(t)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":"+strconv.Uitoa(*port))
@@ -154,14 +105,6 @@ func main() {
 		log.Exit("listen error:", e)
 	}
 	http.Serve(l, nil)
-	// for {
-	// 	conn, err := l.Accept()
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 	} else {
-	// 		go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
-	// 	}
-	// }
 }
 
 func newPollChan() *LunchTracker {
