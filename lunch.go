@@ -127,6 +127,8 @@ func main() {
 			fmt.Println(string(out))
 		} else {
 			for i, p := range poll.Places {
+				fmt.Println("P IS A THING")
+				fmt.Println(p)
 				if i != 0 || *noVotes {
 					ppPlace(p.(*Place))
 				}

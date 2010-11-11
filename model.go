@@ -16,7 +16,7 @@ func NewPoll() LunchPoll {
 		Votes:        make(map[string]*Place),
 		IndexCounter: 1}
 
-	defaultPlace := Place{
+	defaultPlace := &Place{
 		Id:        0,
 		Name:      "No Where",
 		Votes:     0,
@@ -103,7 +103,7 @@ func (p *LunchPoll) getPerson(name string) *Person {
 		if place == nil {
 			continue
 		}
-		for _, peep := range place.(Place).People {
+		for _, peep := range place.(*Place).People {
 			person, ok := peep.(*Person)
 			if ok && person.Name == name {
 				return person
@@ -114,7 +114,7 @@ func (p *LunchPoll) getPerson(name string) *Person {
 		CanDrive:        false,
 		Name:            name,
 		NominationsLeft: 2}
-	defaultPeopleVector := p.Places.At(0).(Place).People
+	defaultPeopleVector := p.Places.At(0).(*Place).People
 	defaultPeopleVector.Push(person)
 	return person
 }
