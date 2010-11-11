@@ -6,7 +6,7 @@ import (
 
 type LunchPoll struct {
 	Places       vector.Vector
-	indexCounter uint
+	IndexCounter uint
 	Votes        map[string]*Place
 }
 
@@ -14,7 +14,7 @@ func NewPoll() LunchPoll {
 	poll := LunchPoll{
 		Places:       make(vector.Vector, 5),
 		Votes:        make(map[string]*Place),
-		indexCounter: 1}
+		IndexCounter: 1}
 
 	defaultPlace := Place{
 		Id:        0,
@@ -31,15 +31,15 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 	person := p.getPerson(nominator)
 	if person.NominationsLeft > 0 {
 		place := &Place{
-			Id:        p.indexCounter,
+			Id:        p.IndexCounter,
 			Nominator: person,
 			Name:      name,
 			People:    make(vector.Vector, 3)}
 		p.Places.Push(place)
-		defer func() { p.indexCounter++ }()
+		defer func() { p.IndexCounter++ }()
 		person.NominationsLeft--
 	}
-	return p.indexCounter
+	return p.IndexCounter
 }
 
 func (p *LunchPoll) delPlace(placeId uint) bool {
@@ -100,6 +100,9 @@ func (p *LunchPoll) unVote(who string) bool {
 // Helpers
 func (p *LunchPoll) getPerson(name string) *Person {
 	for _, place := range p.Places {
+		if place == nil {
+			continue
+		}
 		for _, peep := range place.(Place).People {
 			person, ok := peep.(*Person)
 			if ok && person.Name == name {
