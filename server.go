@@ -154,14 +154,6 @@ func main() {
 		log.Exit("listen error:", e)
 	}
 	http.Serve(l, nil)
-	// for {
-	// 	conn, err := l.Accept()
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 	} else {
-	// 		go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
-	// 	}
-	// }
 }
 
 func newPollChan() *LunchTracker {

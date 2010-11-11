@@ -6,6 +6,7 @@ import (
 	"container/vector"
 	"encoding/base64"
 	"os"
+	"fmt"
 )
 
 type Byter interface {
@@ -49,6 +50,9 @@ type Person struct {
 }
 
 func (p *Person) String() string {
+	if p == nil {
+		return "nillll"
+	}
 	str := p.Name
 	if p.CanDrive {
 		str += " [" + strconv.Uitoa(p.NumSeats) + " seats]"
@@ -91,7 +95,17 @@ type Auth struct {
 }
 
 func (p *Place) String() string {
-	str := strconv.Uitoa(p.Id) + ") " + p.Name + " : " + p.Nominator.Name + " [" + strconv.Uitoa(p.Votes) + " votes]"
+	if p == nil {
+		return "nilll"
+	}
+
+	nomName := "nobody"
+	if p.Nominator != nil {
+		nomName = p.Nominator.Name
+	}
+
+	str := strconv.Uitoa(p.Id) + ") " + p.Name + " : " + nomName + " [" + strconv.Uitoa(p.Votes) + " votes]"
+	fmt.Println(p.People)
 	for _, person := range p.People {
 		pers := person.(*Person)
 		str += "\n  - " + pers.String()

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"crypto/rand"
+	"fmt"
 )
 
 type LunchTracker chan LunchPoll
@@ -79,6 +80,7 @@ func (t *LunchTracker) DisplayPlaces(args *EmptyArgs, response *LunchPoll) os.Er
 		return ive
 	}
 	*response = t.getPoll()
+	fmt.Println(response.Places)
 	t.putPoll(*response)
 	return nil
 }
