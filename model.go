@@ -12,7 +12,7 @@ type LunchPoll struct {
 
 func NewPoll() LunchPoll {
 	poll := LunchPoll{
-		Places:       make(vector.Vector, 5),
+		Places:       make(vector.Vector, 0),
 		Votes:        make(map[string]*Place),
 		IndexCounter: 1}
 
@@ -20,7 +20,7 @@ func NewPoll() LunchPoll {
 		Id:        0,
 		Name:      "No Where",
 		Votes:     0,
-		People:    make(vector.Vector, 5),
+		People:    make(vector.Vector, 0),
 		Nominator: nil}
 
 	poll.Places.Push(defaultPlace)
@@ -34,7 +34,7 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 			Id:        p.IndexCounter,
 			Nominator: person,
 			Name:      name,
-			People:    make(vector.Vector, 3)}
+			People:    make(vector.Vector, 0)}
 		p.Places.Push(place)
 		defer func() { p.IndexCounter++ }()
 		person.NominationsLeft--
