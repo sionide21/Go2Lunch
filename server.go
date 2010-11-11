@@ -2,10 +2,10 @@ package main
 
 import (
 	"rpc"
+	"http"
 	"log"
 	"net"
 	"os"
-	"rpc/jsonrpc"
 	"crypto/hmac"
 	"crypto/sha512"
 	"crypto/subtle"
@@ -145,19 +145,23 @@ func main() {
 		log.Exit("Error reading config file. Have you created it?\nCoused By: ", err)
 	}
 	t := newPollChan()
+
+	RegisterTypes()
 	rpc.Register(t)
+	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":"+strconv.Uitoa(*port))
 	if e != nil {
 		log.Exit("listen error:", e)
 	}
-	for {
-		conn, err := l.Accept()
-		if err != nil {
-			log.Println(err)
-		} else {
-			go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
-		}
-	}
+	http.Serve(l, nil)
+	// for {
+	// 	conn, err := l.Accept()
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 	} else {
+	// 		go rpc.ServeCodec(jsonrpc.NewServerCodec(conn))
+	// 	}
+	// }
 }
 
 func newPollChan() *LunchTracker {

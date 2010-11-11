@@ -4,7 +4,6 @@ import (
 	"flag"
 	"strconv"
 	"rpc"
-	"rpc/jsonrpc"
 	"fmt"
 	"strings"
 	"os"
@@ -88,7 +87,8 @@ func main() {
 		return
 	}
 
-	r, e := jsonrpc.Dial("tcp", host)
+	RegisterTypes()
+	r, e := rpc.DialHTTP("tcp", host)
 	if e != nil {
 		fmt.Println("Cannot connect to server: " + host)
 		os.Exit(-1)
@@ -127,10 +127,8 @@ func main() {
 			fmt.Println(string(out))
 		} else {
 			for i, p := range poll.Places {
-				fmt.Println("P IS A THING")
-				fmt.Println(p)
 				if i != 0 || *noVotes {
-					ppPlace(p.(*Place))
+					ppPlace(p.(Place))
 				}
 			}
 		}
@@ -138,11 +136,11 @@ func main() {
 
 }
 
-func ppPlace(place *Place) {
+func ppPlace(place Place) {
 	home := os.Getenv("HOME")
 	t, err := template.ParseFile(path.Join(home, ".lunch", templateFile), nil)
 	if err != nil {
-		fmt.Println((*place).String())
+		fmt.Println(place.String())
 		return
 	}
 	t.Execute(place, os.Stdout)

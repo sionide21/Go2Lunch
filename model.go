@@ -2,6 +2,7 @@ package main
 
 import (
 	"container/vector"
+	"gob"
 )
 
 type LunchPoll struct {
@@ -16,7 +17,7 @@ func NewPoll() LunchPoll {
 		Votes:        make(map[string]*Place),
 		IndexCounter: 1}
 
-	defaultPlace := &Place{
+	defaultPlace := Place{
 		Id:        0,
 		Name:      "No Where",
 		Votes:     0,
@@ -30,7 +31,7 @@ func NewPoll() LunchPoll {
 func (p *LunchPoll) addPlace(name, nominator string) uint {
 	person := p.getPerson(nominator)
 	if person.NominationsLeft > 0 {
-		place := &Place{
+		place := Place{
 			Id:        p.IndexCounter,
 			Nominator: person,
 			Name:      name,
@@ -103,7 +104,7 @@ func (p *LunchPoll) getPerson(name string) *Person {
 		if place == nil {
 			continue
 		}
-		for _, peep := range place.(*Place).People {
+		for _, peep := range place.(Place).People {
 			person, ok := peep.(*Person)
 			if ok && person.Name == name {
 				return person
@@ -114,16 +115,16 @@ func (p *LunchPoll) getPerson(name string) *Person {
 		CanDrive:        false,
 		Name:            name,
 		NominationsLeft: 2}
-	defaultPeopleVector := p.Places.At(0).(*Place).People
+	defaultPeopleVector := p.Places.At(0).(Place).People
 	defaultPeopleVector.Push(person)
 	return person
 }
 
 func (p *LunchPoll) getPlace(dest uint) (*Place, bool) {
 	for _, pl := range p.Places {
-		place, _ := pl.(*Place)
+		place, _ := pl.(Place)
 		if place.Id == dest {
-			return place, true
+			return &place, true
 		}
 	}
 	return nil, false
@@ -135,11 +136,31 @@ func (p *LunchPoll) remove(sp *Place) bool {
 			return false
 		}
 
-		pl, ok := place.(*Place)
+		pl, ok := place.(Place)
 		if ok && pl.Id == sp.Id {
 			p.Places.Delete(i)
 			return true
 		}
 	}
 	return false
+}
+
+func RegisterTypes() {
+	gob.Register(
+		LunchPoll{
+			Places:       make(vector.Vector, 0),
+			Votes:        make(map[string]*Place),
+			IndexCounter: 1})
+	gob.Register(
+		Place{
+			Id:        0,
+			Name:      "No Where",
+			Votes:     0,
+			People:    make(vector.Vector, 0),
+			Nominator: nil})
+	gob.Register(
+		Person{
+			CanDrive:        false,
+			Name:            "",
+			NominationsLeft: 2})
 }
