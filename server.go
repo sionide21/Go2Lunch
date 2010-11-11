@@ -14,11 +14,12 @@ import (
 	"json"
 	"flag"
 	"strconv"
+	"gob"
 )
 
 var port = flag.Uint("p", 1234, "Specifies the port to listen on.")
 var configFile = flag.String("c", "config.json", "Specify a config file.")
-var dataFile = flag.String("d", "data.gob", "Specify a data file.")
+var dataFile = flag.String("d", "", "Specify a data file.")
 var displayHelp = flag.Bool("help", false, "Displays this help message.")
 
 type ServerConfig struct {
@@ -96,7 +97,26 @@ func main() {
 	if err != nil {
 		log.Exit("Error reading config file. Have you created it?\nCaused By: ", err)
 	}
-	t := newPollChan()
+
+	var t *LunchTracker
+
+	if *dataFile != "" {
+		stat, err := os.Stat(*dataFile)
+		if err != nil {
+			panic(err)
+		}
+
+		if stat.IsRegular() {
+			file, ferr := os.Open(*dataFile, os.O_RDONLY, 0600)
+			if ferr != nil {
+				panic(ferr)
+			}
+			t = oldPollChan(file)
+		}
+	} else {
+		t = newPollChan()
+	}
+	*dataFile = "poll.gob"
 
 	rpc.Register(t)
 	rpc.HandleHTTP()
@@ -108,8 +128,21 @@ func main() {
 }
 
 func newPollChan() *LunchTracker {
+	return pollChan(NewPoll())
+}
+
+func oldPollChan(file *os.File) *LunchTracker {
+	decode := gob.NewDecoder(file)
+	poll := &LunchPoll{}
+	err := decode.Decode(poll)
+	if err != nil {
+		panic(err)
+	}
+	return pollChan(*poll)
+}
+
+func pollChan(poll LunchPoll) *LunchTracker {
 	ch := LunchTracker(make(chan LunchPoll))
-	poll := NewPoll()
 	go func() {
 		for {
 			ch <- poll

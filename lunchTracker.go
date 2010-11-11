@@ -119,9 +119,9 @@ func (t *LunchTracker) putPoll(l LunchPoll) {
 }
 
 func (t *LunchTracker) persist(poll LunchPoll) {
-	file, err := os.Open("poll", os.O_WRONLY|os.O_CREATE, 0600)
+	file, err := os.Open(*dataFile, os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
-		panic("can't open file")
+		panic(err)
 	}
 	defer file.Close()
 	encode := gob.NewEncoder(file)
