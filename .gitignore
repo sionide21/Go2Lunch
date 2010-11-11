@@ -1,6 +1,7 @@
 *.out
 *.6
 *.swp
+*.gob
 update
 lunch
 server

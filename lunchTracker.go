@@ -4,6 +4,7 @@ import (
 	"os"
 	"crypto/rand"
 	"fmt"
+	"gob"
 )
 
 type LunchTracker chan LunchPoll
@@ -15,6 +16,7 @@ func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *uint) os.Error {
 	}
 	poll := t.getPoll()
 	*place = poll.addPlace(args.Name, args.Auth.Name)
+	t.persist(poll)
 	t.putPoll(poll)
 	return nil
 }
@@ -26,6 +28,7 @@ func (t *LunchTracker) DelPlace(args *UIntArgs, success *bool) os.Error {
 	}
 	poll := t.getPoll()
 	*success = poll.delPlace(args.Num)
+	t.persist(poll)
 	t.putPoll(poll)
 	return nil
 }
@@ -37,6 +40,7 @@ func (t *LunchTracker) Drive(args *UIntArgs, success *bool) os.Error {
 	}
 	poll := t.getPoll()
 	*success = poll.drive(args.Auth.Name, args.Num)
+	t.persist(poll)
 	t.putPoll(poll)
 	return nil
 }
@@ -48,6 +52,7 @@ func (t *LunchTracker) UnDrive(args *EmptyArgs, success *bool) os.Error {
 	}
 	poll := t.getPoll()
 	*success = poll.unDrive(args.Auth.Name)
+	t.persist(poll)
 	t.putPoll(poll)
 	return nil
 }
@@ -59,6 +64,7 @@ func (t *LunchTracker) Vote(args *UIntArgs, success *bool) os.Error {
 	}
 	poll := t.getPoll()
 	*success = poll.vote(args.Auth.Name, args.Num)
+	t.persist(poll)
 	t.putPoll(poll)
 	return nil
 }
@@ -70,6 +76,7 @@ func (t *LunchTracker) UnVote(args *EmptyArgs, success *bool) os.Error {
 	}
 	poll := t.getPoll()
 	*success = poll.unVote(args.Auth.Name)
+	t.persist(poll)
 	t.putPoll(poll)
 	return nil
 }
@@ -111,4 +118,14 @@ func (t *LunchTracker) getPoll() LunchPoll {
 
 func (t *LunchTracker) putPoll(l LunchPoll) {
 	*t <- l
+}
+
+func (t *LunchTracker) persist(poll LunchPoll) {
+	file, err := os.Open(*dataFile, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	encode := gob.NewEncoder(file)
+	encode.Encode(poll)
 }

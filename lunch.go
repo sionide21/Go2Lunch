@@ -87,7 +87,6 @@ func main() {
 		return
 	}
 
-	RegisterTypes()
 	r, e := rpc.DialHTTP("tcp", host)
 	if e != nil {
 		fmt.Println("Cannot connect to server: " + host)
