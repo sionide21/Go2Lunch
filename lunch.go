@@ -144,20 +144,10 @@ func ppPlace(place *Place) {
 	home := os.Getenv("HOME")
 	t, err := template.ParseFile(path.Join(home, ".lunch", templateFile), nil)
 	if err != nil {
-		fmt.Println(place.ClientString())
+		fmt.Println(place.String())
 		return
 	}
 	t.Execute(place, os.Stdout)
-}
-
-func (p *Place) ClientString() string {
-	str := strconv.Uitoa(p.Id) + ") " + p.Name + " : " + p.Nominator.Name + " [" + strconv.Uitoa(p.Votes) + " votes]"
-	fmt.Println("OMG OMG")
-	fmt.Println(p.People)
-	for _, person := range p.People {
-		str += "\n  - " + person.String()
-	}
-	return str
 }
 
 

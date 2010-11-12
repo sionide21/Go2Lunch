@@ -22,7 +22,7 @@ end
 
 $exes.each do |exe, dep|
     rule exe => ['.6'] do |t|
-        sh "6l -L. -o #{t.name} #{t.source}"
+        sh "6l -o #{t.name} #{t.source}"
     end
 end
 
@@ -49,13 +49,13 @@ task :format do
 end
 
 desc "Clean, format, build, and if successful, commit"
-task :commit => [:clean, :format, :generate, :build_all] do
+task :commit => [:clean, :generate, :format, :build_all] do
     sh "git commit -a"
 end
 
 desc "Generates the proper vector files"
 task :generate do
   %w(Person Place).each do |type|
-    sh "cat #{ENV['GOROOT']}/src/pkg/container/vector/vector.go | gofmt -r='Vector -> #{type}Vector' | gofmt -r='interface{} -> *#{type}' | sed 's/vector/main/' > #{type.downcase}vector.go"
+    sh "cat #{ENV['GOROOT'] || '~/go'}/src/pkg/container/vector/vector.go | gofmt -r='Vector -> #{type}Vector' | gofmt -r='interface{} -> *#{type}' | sed 's/vector/main/' > #{type.downcase}vector.go"
   end
 end
