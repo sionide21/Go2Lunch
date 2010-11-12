@@ -8,7 +8,7 @@ import (
 
 type LunchTracker chan LunchPoll
 
-func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *int) os.Error {
+func (t *LunchTracker) AddPlace(args *StringArgs, place *int) os.Error {
 	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
@@ -19,6 +19,18 @@ func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *int) os.Error {
 	if !ok {
 		*place = -1
 	}
+	t.persist(poll)
+	t.putPoll(poll)
+	return nil
+}
+
+func (t *LunchTracker) Comment(args *StringArgs, success *bool) os.Error {
+	valid, ive := verify(&args.Auth, args)
+	if !valid {
+		return ive
+	}
+	poll := t.getPoll()
+	*success = poll.comment(args.String, args.Auth.Name)
 	t.persist(poll)
 	t.putPoll(poll)
 	return nil

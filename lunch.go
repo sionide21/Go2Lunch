@@ -28,6 +28,7 @@ const (
 	undriveError  = "UnDriving Failed"
 	voteError     = "Vote Failed"
 	driveError    = "Drive Failed"
+	commentError  = "Comment Failed"
 	delPlaceError = "Could not delete. This can happen if there are still votes on the place or if you did not nominate it."
 	addPlaceError = "Could not add. You only have two nominations, and you can't add an unnamed place or a place that is already added."
 
@@ -51,6 +52,7 @@ var up = flag.Bool("p", false, "enable automatic update checks")
 var version = flag.Bool("v", false, "show current version")
 var printJson = flag.Bool("json", false, "display output in json")
 var noVotes = flag.Bool("e", false, "print everyone")
+var comment = flag.Bool("c", false, "comment")
 var sekrit = ""
 var user = ""
 var host = ""
@@ -113,6 +115,9 @@ func main() {
 		remote.unvote()
 	case dest != 0:
 		remote.vote(dest)
+	case *comment:
+		comment := strings.Join(flag.Args(), " ")
+		remote.comment(comment)
 	default:
 		poll = remote.displayPlaces()
 	}
@@ -153,7 +158,7 @@ func ppPlace(place *Place) {
 
 
 func (t *LunchServer) addPlace(name string) (place int) {
-	args := &AddPlaceArgs{Name: name}
+	args := &StringArgs{String: name}
 	args.Auth = *(t.calcAuth(args))
 	err := t.Call("LunchTracker.AddPlace", &args, &place)
 	if err != nil {
@@ -161,6 +166,21 @@ func (t *LunchServer) addPlace(name string) (place int) {
 	}
 	if place < 0 {
 		panic(addPlaceError)
+	}
+	return
+}
+
+func (t *LunchServer) comment(comment string) {
+	args := &StringArgs{String: comment}
+	args.Auth = *(t.calcAuth(args))
+	var suc bool
+	err := t.Call("LunchTracker.Comment", &args, &suc)
+	if err != nil {
+		panic(err)
+	}
+
+	if !suc {
+		panic(commentError)
 	}
 	return
 }
