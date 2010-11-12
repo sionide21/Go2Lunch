@@ -26,7 +26,7 @@ func (t *LunchTracker) DelPlace(args *UIntArgs, success *bool) os.Error {
 		return ive
 	}
 	poll := t.getPoll()
-	*success = poll.delPlace(args.Num)
+	*success = poll.delPlace(args.Num, args.Auth.Name)
 	t.persist(poll)
 	t.putPoll(poll)
 	return nil

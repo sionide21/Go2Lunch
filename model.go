@@ -46,10 +46,10 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 	return p.IndexCounter
 }
 
-func (p *LunchPoll) delPlace(placeId uint) bool {
+func (p *LunchPoll) delPlace(placeId uint, person string) bool {
 	place, ok := p.getPlace(placeId)
 	if ok {
-		if place.Votes == 0 {
+		if place.Votes == 0 && place.Nominator.Name == person {
 			if p.remove(place) {
 				place.Nominator.NominationsLeft++
 				return true
