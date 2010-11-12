@@ -171,7 +171,7 @@ func (p *LunchPoll) remove(sp *Place) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
