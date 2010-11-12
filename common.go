@@ -22,13 +22,13 @@ func (a *AddPlaceArgs) Byte() []byte {
 }
 
 
-type UIntArgs struct {
+type IntArgs struct {
 	Auth
-	Num uint
+	Num int
 }
 
-func (a *UIntArgs) Byte() []byte {
-	b := bytes.NewBufferString(strconv.Uitoa(a.Num))
+func (a *IntArgs) Byte() []byte {
+	b := bytes.NewBufferString(strconv.Itoa(a.Num))
 	return b.Bytes()
 }
 
@@ -43,20 +43,20 @@ func (a *EmptyArgs) Byte() []byte {
 type Person struct {
 	CanDrive        bool
 	Name            string
-	NumSeats        uint
+	NumSeats        int
 	NominationsLeft uint
 }
 
 func (p *Person) String() string {
 	str := p.Name
 	if p.CanDrive {
-		str += " [" + strconv.Uitoa(p.NumSeats) + " seats]"
+		str += " [" + strconv.Itoa(p.NumSeats) + " seats]"
 	}
 	return str
 }
 
 type Place struct {
-	Id        uint
+	Id        int
 	Name      string
 	Votes     uint
 	People    PersonVector
@@ -95,7 +95,7 @@ func (p *Place) String() string {
 		nomName = p.Nominator.Name
 	}
 
-	str := strconv.Uitoa(p.Id) + ") " + p.Name + " : " + nomName + " [" + strconv.Uitoa(p.Votes) + " votes]"
+	str := strconv.Itoa(p.Id) + ") " + p.Name + " : " + nomName + " [" + strconv.Uitoa(p.Votes) + " votes]"
 	for _, person := range p.People {
 		str += "\n  - " + person.String()
 	}

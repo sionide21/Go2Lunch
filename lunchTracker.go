@@ -8,19 +8,23 @@ import (
 
 type LunchTracker chan LunchPoll
 
-func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *uint) os.Error {
+func (t *LunchTracker) AddPlace(args *AddPlaceArgs, place *int) os.Error {
 	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
 	}
+	var ok bool
 	poll := t.getPoll()
-	*place = poll.addPlace(args.Name, args.Auth.Name)
+	*place, ok = poll.addPlace(args.Name, args.Auth.Name)
+	if !ok {
+		*place = -1
+	}
 	t.persist(poll)
 	t.putPoll(poll)
 	return nil
 }
 
-func (t *LunchTracker) DelPlace(args *UIntArgs, success *bool) os.Error {
+func (t *LunchTracker) DelPlace(args *IntArgs, success *bool) os.Error {
 	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
@@ -32,7 +36,7 @@ func (t *LunchTracker) DelPlace(args *UIntArgs, success *bool) os.Error {
 	return nil
 }
 
-func (t *LunchTracker) Drive(args *UIntArgs, success *bool) os.Error {
+func (t *LunchTracker) Drive(args *IntArgs, success *bool) os.Error {
 	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
@@ -56,7 +60,7 @@ func (t *LunchTracker) UnDrive(args *EmptyArgs, success *bool) os.Error {
 	return nil
 }
 
-func (t *LunchTracker) Vote(args *UIntArgs, success *bool) os.Error {
+func (t *LunchTracker) Vote(args *IntArgs, success *bool) os.Error {
 	valid, ive := verify(&args.Auth, args)
 	if !valid {
 		return ive
