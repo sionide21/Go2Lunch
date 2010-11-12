@@ -11,13 +11,13 @@ type Byter interface {
 	Byte() []byte
 }
 
-type AddPlaceArgs struct {
+type StringArgs struct {
 	Auth
-	Name string
+	String string
 }
 
-func (a *AddPlaceArgs) Byte() []byte {
-	b := bytes.NewBufferString(a.Name)
+func (a *StringArgs) Byte() []byte {
+	b := bytes.NewBufferString(a.String)
 	return b.Bytes()
 }
 
@@ -45,12 +45,16 @@ type Person struct {
 	Name            string
 	NumSeats        uint
 	NominationsLeft uint
+	Comment         string
 }
 
 func (p *Person) String() string {
 	str := p.Name
 	if p.CanDrive {
 		str += " [" + strconv.Uitoa(p.NumSeats) + " seats]"
+	}
+	if p.Comment != "" {
+		str += " -- " + p.Comment
 	}
 	return str
 }

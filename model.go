@@ -145,6 +145,12 @@ func (p *LunchPoll) remove(sp *Place) bool {
 	return false
 }
 
+func (p *LunchPoll) comment(comment, user string) bool {
+	person := p.getPerson(user)
+	person.Comment = comment
+	return true
+}
+
 func RegisterTypes() {
 	gob.Register(make(PlaceVector, 0))
 	gob.Register(make(PersonVector, 0))
