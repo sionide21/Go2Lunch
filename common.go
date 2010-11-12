@@ -3,7 +3,6 @@ package main
 import (
 	"strconv"
 	"bytes"
-	"container/vector"
 	"encoding/base64"
 	"os"
 	"fmt"
@@ -64,7 +63,7 @@ type Place struct {
 	Id        uint
 	Name      string
 	Votes     uint
-	People    vector.Vector
+	People    PersonVector
 	Nominator *Person
 }
 
@@ -107,19 +106,17 @@ func (p *Place) String() string {
 	str := strconv.Uitoa(p.Id) + ") " + p.Name + " : " + nomName + " [" + strconv.Uitoa(p.Votes) + " votes]"
 	fmt.Println(p.People)
 	for _, person := range p.People {
-		pers := person.(*Person)
-		str += "\n  - " + pers.String()
+		str += "\n  - " + person.String()
 	}
 	return str
 }
 
-func (p *Place) RemovePerson(name string) Person {
+func (p *Place) RemovePerson(name string) *Person {
 	for i, e := range p.People {
-		person, ok := e.(*Person)
-		if ok && person.Name == name {
+		if e.Name == name {
 			defer p.People.Delete(i)
-			return p.People.At(i).(Person)
+			return p.People.At(i)
 		}
 	}
-	return Person{CanDrive: false, Name: "", NumSeats: 0, NominationsLeft: 0}
+	return &Person{CanDrive: false, Name: "", NumSeats: 0, NominationsLeft: 0}
 }

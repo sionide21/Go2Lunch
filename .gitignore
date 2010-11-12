@@ -8,3 +8,5 @@ server
 .DS_Store
 config.json
 lunch_config.json
+personvector.go
+placevector.go

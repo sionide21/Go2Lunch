@@ -127,7 +127,7 @@ func main() {
 		} else {
 			for i, p := range poll.Places {
 				if i != 0 || *noVotes {
-					ppPlace(p.(Place))
+					ppPlace(p)
 				}
 			}
 		}
@@ -135,7 +135,7 @@ func main() {
 
 }
 
-func ppPlace(place Place) {
+func ppPlace(place *Place) {
 	home := os.Getenv("HOME")
 	t, err := template.ParseFile(path.Join(home, ".lunch", templateFile), nil)
 	if err != nil {
@@ -150,8 +150,7 @@ func (p *Place) ClientString() string {
 	fmt.Println("OMG OMG")
 	fmt.Println(p.People)
 	for _, person := range p.People {
-		pers := person.(Person)
-		str += "\n  - " + pers.String()
+		str += "\n  - " + person.String()
 	}
 	return str
 }

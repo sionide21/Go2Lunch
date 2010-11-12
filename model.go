@@ -1,12 +1,11 @@
 package main
 
 import (
-	"container/vector"
 	"gob"
 )
 
 type LunchPoll struct {
-	Places       vector.Vector
+	Places       PlaceVector
 	IndexCounter uint
 	Votes        map[string]*Place
 }
@@ -17,7 +16,7 @@ func init() {
 
 func NewPoll() LunchPoll {
 	poll := LunchPoll{
-		Places:       make(vector.Vector, 0),
+		Places:       make(PlaceVector, 0),
 		Votes:        make(map[string]*Place),
 		IndexCounter: 1}
 
@@ -25,7 +24,7 @@ func NewPoll() LunchPoll {
 		Id:        0,
 		Name:      "No Where",
 		Votes:     0,
-		People:    make(vector.Vector, 0),
+		People:    make(PersonVector, 0),
 		Nominator: nil}
 
 	poll.Places.Push(defaultPlace)
@@ -39,7 +38,7 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 			Id:        p.IndexCounter,
 			Nominator: person,
 			Name:      name,
-			People:    make(vector.Vector, 0)}
+			People:    make(PersonVector, 0)}
 		p.Places.Push(place)
 		defer func() { p.IndexCounter++ }()
 		person.NominationsLeft--
@@ -94,7 +93,7 @@ func (p *LunchPoll) unVote(who string) bool {
 		p.Votes[who] = nil, false
 		person := place.RemovePerson(who)
 		if person.Name != "" {
-			people := p.Places.At(0).(*Place).People
+			people := p.Places.At(0).People
 			people.Push(person)
 			return true
 		}
@@ -108,10 +107,9 @@ func (p *LunchPoll) getPerson(name string) *Person {
 		if place == nil {
 			continue
 		}
-		for _, peep := range place.(*Place).People {
-			person, ok := peep.(*Person)
-			if ok && person.Name == name {
-				return person
+		for _, peep := range place.People {
+			if peep.Name == name {
+				return peep
 			}
 		}
 	}
@@ -119,16 +117,15 @@ func (p *LunchPoll) getPerson(name string) *Person {
 		CanDrive:        false,
 		Name:            name,
 		NominationsLeft: 2}
-	defaultPeopleVector := p.Places.At(0).(*Place).People
+	defaultPeopleVector := p.Places.At(0).People
 	defaultPeopleVector.Push(person)
 	return person
 }
 
 func (p *LunchPoll) getPlace(dest uint) (*Place, bool) {
 	for _, pl := range p.Places {
-		place, _ := pl.(*Place)
-		if place.Id == dest {
-			return place, true
+		if pl.Id == dest {
+			return pl, true
 		}
 	}
 	return nil, false
@@ -140,8 +137,7 @@ func (p *LunchPoll) remove(sp *Place) bool {
 			return false
 		}
 
-		pl, ok := place.(*Place)
-		if ok && pl.Id == sp.Id {
+		if place.Id == sp.Id {
 			p.Places.Delete(i)
 			return true
 		}
@@ -150,10 +146,11 @@ func (p *LunchPoll) remove(sp *Place) bool {
 }
 
 func RegisterTypes() {
-	gob.Register(make(vector.Vector, 0))
+	gob.Register(make(PlaceVector, 0))
+	gob.Register(make(PersonVector, 0))
 	gob.Register(
 		LunchPoll{
-			Places:       make(vector.Vector, 0),
+			Places:       make(PlaceVector, 0),
 			Votes:        make(map[string]*Place),
 			IndexCounter: 1})
 	gob.Register(
@@ -161,7 +158,7 @@ func RegisterTypes() {
 			Id:     0,
 			Name:   "No Where",
 			Votes:  0,
-			People: make(vector.Vector, 0),
+			People: make(PersonVector, 0),
 			Nominator: &Person{
 				CanDrive:        false,
 				Name:            "",
