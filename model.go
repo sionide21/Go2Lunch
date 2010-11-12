@@ -2,13 +2,17 @@ package main
 
 import (
 	"gob"
+	"strings"
+	"regexp"
 )
 
 type LunchPoll struct {
 	Places       PlaceVector
-	IndexCounter uint
+	IndexCounter int
 	Votes        map[string]*Place
 }
+
+var placeRegex = regexp.MustCompile("[^A-Z0-9]")
 
 func init() {
 	RegisterTypes()
@@ -31,7 +35,12 @@ func NewPoll() LunchPoll {
 	return poll
 }
 
-func (p *LunchPoll) addPlace(name, nominator string) uint {
+func (p *LunchPoll) addPlace(name, nominator string) (count int, success bool) {
+	count = p.IndexCounter
+	if name == "" || p.placeExists(name) {
+		return
+	}
+
 	person := p.getPerson(nominator)
 	if person.NominationsLeft > 0 {
 		place := &Place{
@@ -40,13 +49,14 @@ func (p *LunchPoll) addPlace(name, nominator string) uint {
 			Name:      name,
 			People:    make(PersonVector, 0)}
 		p.Places.Push(place)
-		defer func() { p.IndexCounter++ }()
+		p.IndexCounter++
 		person.NominationsLeft--
+		success = true
 	}
-	return p.IndexCounter
+	return
 }
 
-func (p *LunchPoll) delPlace(placeId uint, person string) bool {
+func (p *LunchPoll) delPlace(placeId int, person string) bool {
 	place, ok := p.getPlace(placeId)
 	if ok {
 		if place.Votes == 0 && place.Nominator.Name == person {
@@ -59,7 +69,7 @@ func (p *LunchPoll) delPlace(placeId uint, person string) bool {
 	return false
 }
 
-func (p *LunchPoll) drive(who string, seats uint) bool {
+func (p *LunchPoll) drive(who string, seats int) bool {
 	person := p.getPerson(who)
 	person.CanDrive = true
 	person.NumSeats = seats
@@ -73,7 +83,7 @@ func (p *LunchPoll) unDrive(who string) bool {
 	return true
 }
 
-func (p *LunchPoll) vote(who string, vote uint) bool {
+func (p *LunchPoll) vote(who string, vote int) bool {
 	if vote < 1 {
 		return false
 	}
@@ -130,7 +140,7 @@ func (p *LunchPoll) getPerson(name string) *Person {
 	return person
 }
 
-func (p *LunchPoll) getPlace(dest uint) (*Place, bool) {
+func (p *LunchPoll) getPlace(dest int) (*Place, bool) {
 	for _, pl := range p.Places {
 		if pl.Id == dest {
 			return pl, true
@@ -155,6 +165,20 @@ func (p *LunchPoll) remove(sp *Place) bool {
 
 		if place.Id == sp.Id {
 			p.Places.Delete(i)
+			return true
+		}
+	}
+	return false
+}
+
+func sanitizePlace(name string) string {
+	return placeRegex.ReplaceAllString(strings.ToUpper(name), "")
+}
+
+func (p *LunchPoll) placeExists(name string) bool {
+	check := sanitizePlace(name)
+	for _, place := range p.Places {
+		if check == sanitizePlace(place.Name) {
 			return true
 		}
 	}

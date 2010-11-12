@@ -30,6 +30,7 @@ const (
 	driveError    = "Drive Failed"
 	commentError  = "Comment Failed"
 	delPlaceError = "Could not delete. This can happen if there are still votes on the place or if you did not nominate it."
+	addPlaceError = "Could not add. You only have two nominations, and you can't add an unnamed place or a place that is already added."
 
 	noSekrit  = "No Auth Token"
 	noUser    = "No User Name"
@@ -41,7 +42,7 @@ const clientVersion = "0.03"
 
 var add = flag.Bool("a", false, "add a place")
 var del = flag.Bool("rm", false, "remove a place")
-var seats = flag.Uint("d", 0, "driver with _ additional seats")
+var seats = flag.Int("d", 0, "driver with _ additional seats")
 var unvote = flag.Bool("u", false, "unvote")
 var server = flag.String("s", "", "[host]:[port]")
 var name = flag.String("n", "", "user name")
@@ -95,7 +96,7 @@ func main() {
 	}
 	remote := &LunchServer{r}
 
-	dest, err := strconv.Atoui(flag.Arg(0))
+	dest, err := strconv.Atoi(flag.Arg(0))
 	var poll *LunchPoll
 
 	switch {
@@ -156,12 +157,15 @@ func ppPlace(place *Place) {
 }
 
 
-func (t *LunchServer) addPlace(name string) (place uint) {
+func (t *LunchServer) addPlace(name string) (place int) {
 	args := &StringArgs{String: name}
 	args.Auth = *(t.calcAuth(args))
 	err := t.Call("LunchTracker.AddPlace", &args, &place)
 	if err != nil {
 		panic(err)
+	}
+	if place < 0 {
+		panic(addPlaceError)
 	}
 	return
 }
@@ -181,8 +185,8 @@ func (t *LunchServer) comment(comment string) {
 	return
 }
 
-func (t *LunchServer) delPlace(dest uint) {
-	args := &UIntArgs{Num: dest}
+func (t *LunchServer) delPlace(dest int) {
+	args := &IntArgs{Num: dest}
 	args.Auth = *(t.calcAuth(args))
 	var suc bool
 	err := t.Call("LunchTracker.DelPlace", args, &suc)
@@ -195,8 +199,8 @@ func (t *LunchServer) delPlace(dest uint) {
 	return
 }
 
-func (t *LunchServer) drive(seats uint) {
-	args := &UIntArgs{Num: seats}
+func (t *LunchServer) drive(seats int) {
+	args := &IntArgs{Num: seats}
 	args.Auth = *(t.calcAuth(args))
 	var suc bool
 	err := t.Call("LunchTracker.Drive", args, &suc)
@@ -209,8 +213,8 @@ func (t *LunchServer) drive(seats uint) {
 	return
 }
 
-func (t *LunchServer) vote(dest uint) {
-	args := &UIntArgs{Num: dest}
+func (t *LunchServer) vote(dest int) {
+	args := &IntArgs{Num: dest}
 	args.Auth = *(t.calcAuth(args))
 	var suc bool
 	err := t.Call("LunchTracker.Vote", args, &suc)
