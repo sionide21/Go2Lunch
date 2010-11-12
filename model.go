@@ -12,7 +12,7 @@ type LunchPoll struct {
 	Votes        map[string]*Place
 }
 
-var placeRegex = regexp.MustCompile("[^A-Z]")
+var placeRegex = regexp.MustCompile("[^A-Z0-9]")
 
 func init() {
 	RegisterTypes()
