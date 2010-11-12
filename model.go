@@ -57,6 +57,9 @@ func (p *LunchPoll) addPlace(name, nominator string) (count int, success bool) {
 }
 
 func (p *LunchPoll) delPlace(placeId int, person string) bool {
+	if placeId < 1 {
+		return false
+	}
 	place, ok := p.getPlace(placeId)
 	if ok {
 		if place.Votes == 0 && place.Nominator.Name == person {
