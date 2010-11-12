@@ -70,11 +70,10 @@ func main() {
 	flag.Parse()
 
 	// Check for new versions of the client application.
+	var upChan chan os.Error
+
 	if !*noup {
-		err := CheckForUpdates()
-		if err != nil {
-			panic(err)
-		}
+		upChan = CheckForUpdates()
 	}
 
 	err := getConfig()
@@ -133,6 +132,12 @@ func main() {
 		}
 	}
 
+	if !*noup {
+		upErr := <-upChan
+		if upErr != nil {
+			panic(upErr)
+		}
+	}
 }
 
 func ppPlace(place Place) {
