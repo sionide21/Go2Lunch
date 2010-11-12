@@ -167,6 +167,7 @@ func (p *LunchPoll) placeExists(name string) bool {
 		}
 	}
 	return false
+}
 
 func (p *LunchPoll) comment(comment, user string) bool {
 	person := p.getPerson(user)
