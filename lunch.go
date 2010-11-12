@@ -46,7 +46,7 @@ var server = flag.String("s", "", "[host]:[port]")
 var name = flag.String("n", "", "user name")
 var walk = flag.Bool("w", false, "not driving")
 var debug = flag.Bool("g", false, "debug")
-var noup = flag.Bool("p", false, "disable automatic update checks")
+var up = flag.Bool("p", false, "enable automatic update checks")
 var version = flag.Bool("v", false, "show current version")
 var printJson = flag.Bool("json", false, "display output in json")
 var noVotes = flag.Bool("e", false, "print everyone")
@@ -72,7 +72,7 @@ func main() {
 	// Check for new versions of the client application.
 	var upChan chan os.Error
 
-	if !*noup {
+	if *up {
 		upChan = CheckForUpdates()
 	}
 
@@ -132,7 +132,7 @@ func main() {
 		}
 	}
 
-	if !*noup {
+	if *up {
 		upErr := <-upChan
 		if upErr != nil {
 			panic(upErr)
