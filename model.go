@@ -74,10 +74,14 @@ func (p *LunchPoll) unDrive(who string) bool {
 }
 
 func (p *LunchPoll) vote(who string, vote uint) bool {
+	if vote < 1 {
+		return false
+	}
 	place, ok := p.getPlace(vote)
 	if ok {
 		person := p.getPerson(who)
 		if p.Votes[who] == nil {
+			p.goingSomewhere(who)
 			p.Votes[who] = place
 			place.Votes++
 			place.People.Push(person)
@@ -93,12 +97,17 @@ func (p *LunchPoll) unVote(who string) bool {
 		p.Votes[who] = nil, false
 		person := place.RemovePerson(who)
 		if person.Name != "" {
-			people := p.Places.At(0).People
-			people.Push(person)
+			p.Places.At(0).People.Push(person)
 			return true
 		}
 	}
 	return false
+}
+
+func (p *LunchPoll) comment(comment, user string) bool {
+	person := p.getPerson(user)
+	person.Comment = comment
+	return true
 }
 
 // Helpers
@@ -117,8 +126,7 @@ func (p *LunchPoll) getPerson(name string) *Person {
 		CanDrive:        false,
 		Name:            name,
 		NominationsLeft: 2}
-	defaultPeopleVector := p.Places.At(0).People
-	defaultPeopleVector.Push(person)
+	p.Places.At(0).People.Push(person)
 	return person
 }
 
@@ -129,6 +137,14 @@ func (p *LunchPoll) getPlace(dest uint) (*Place, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (p *LunchPoll) goingSomewhere(name string) {
+	for i, person := range p.Places.At(0).People {
+		if person.Name == name {
+			p.Places.At(0).People.Delete(i)
+		}
+	}
 }
 
 func (p *LunchPoll) remove(sp *Place) bool {
@@ -143,12 +159,6 @@ func (p *LunchPoll) remove(sp *Place) bool {
 		}
 	}
 	return false
-}
-
-func (p *LunchPoll) comment(comment, user string) bool {
-	person := p.getPerson(user)
-	person.Comment = comment
-	return true
 }
 
 func RegisterTypes() {

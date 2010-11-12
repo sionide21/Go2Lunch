@@ -61,7 +61,6 @@ func checkUser(name string) bool {
 	return valid
 }
 
-
 func verify(a *Auth, d Byter) (bool, os.Error) {
 	cMutex.Lock()
 	key, ok := config.Sekritz[(*a).Name]

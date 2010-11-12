@@ -113,5 +113,5 @@ func (p *Place) RemovePerson(name string) *Person {
 			return p.People.At(i)
 		}
 	}
-	return &Person{CanDrive: false, Name: "", NumSeats: 0, NominationsLeft: 0}
+	return &Person{}
 }
