@@ -25,17 +25,19 @@ func getCurrentVersion() (string, os.Error) {
 	if err != nil {
 		return "", err
 	}
-
+	fmt.Println("1")
 	if res.StatusCode != 200 {
 		return "", os.NewError(fmt.Sprint("Could not check current version. Status code from server: ", res.StatusCode))
 	}
-
+	fmt.Println("2")
 	buf, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return "", err
 	}
+	fmt.Println("3")
 
 	res.Body.Close()
+	fmt.Println("4")
 	return strings.TrimSpace(fmt.Sprintf("%s", buf)), nil
 }
 
@@ -88,6 +90,7 @@ func downloadTempFile(url string, prefix string) (path string, err os.Error) {
 }
 
 func downloadUpdateScript() (path string, err os.Error) {
+	fmt.Println("downloadUpdateScript()")
 	path, err = downloadTempFile(updateScriptUrl, "update_lunch")
 	if err != nil {
 		return
@@ -106,14 +109,20 @@ func runUpdateScript(scriptPath, oldPath, newPath string) (err os.Error) {
 	return
 }
 
-func CheckForUpdates() (err os.Error) {
+func CheckForUpdates() (errChan chan os.Error) {
+	errChan = make(chan os.Error)
+	go checkForUpdates(errChan)
+	return errChan
+}
+
+func checkForUpdates(errChan chan os.Error) {
 	update, version, err := needsUpdate()
 	if err != nil {
-		return
+		errChan <- err
 	}
 
 	if update {
-		fmt.Print("An update is available. Would you like to download it? [Y/n] ")
+		fmt.Println("An update is available. Would you like to download it? [Y/n] ")
 		var result string
 		fmt.Scanln(&result)
 
@@ -124,7 +133,7 @@ func CheckForUpdates() (err os.Error) {
 			fmt.Println("Downloading update script...")
 			scriptPath, err := downloadUpdateScript()
 			if err != nil {
-				return
+				errChan <- err
 			}
 			fmt.Println("Update script downloaded to", scriptPath)
 			fmt.Println()
@@ -132,7 +141,7 @@ func CheckForUpdates() (err os.Error) {
 			fmt.Println("Downloading new version...")
 			newPath, err := downloadNewVersion(version)
 			if err != nil {
-				return
+				errChan <- err
 			}
 			fmt.Println("New version downloaded to", newPath)
 			fmt.Println()
@@ -140,12 +149,12 @@ func CheckForUpdates() (err os.Error) {
 			fmt.Println("Running update script...")
 			err = runUpdateScript(scriptPath, findLunch(), newPath)
 			if err != nil {
-				return
+				errChan <- err
 			}
 
 			// We should have forked the updater by now. We can exit.
 			os.Exit(0)
 		}
 	}
-	return
+	errChan <- nil
 }

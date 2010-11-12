@@ -4,7 +4,6 @@ import (
 	"flag"
 	"strconv"
 	"rpc"
-	"rpc/jsonrpc"
 	"fmt"
 	"strings"
 	"os"
@@ -29,7 +28,9 @@ const (
 	undriveError  = "UnDriving Failed"
 	voteError     = "Vote Failed"
 	driveError    = "Drive Failed"
+	commentError  = "Comment Failed"
 	delPlaceError = "Could not delete. This can happen if there are still votes on the place or if you did not nominate it."
+	addPlaceError = "Could not add. You only have two nominations, and you can't add an unnamed place or a place that is already added."
 
 	noSekrit  = "No Auth Token"
 	noUser    = "No User Name"
@@ -41,15 +42,17 @@ const clientVersion = "0.03"
 
 var add = flag.Bool("a", false, "add a place")
 var del = flag.Bool("rm", false, "remove a place")
-var seats = flag.Uint("d", 0, "driver with _ additional seats")
+var seats = flag.Int("d", 0, "driver with _ additional seats")
 var unvote = flag.Bool("u", false, "unvote")
 var server = flag.String("s", "", "[host]:[port]")
 var name = flag.String("n", "", "user name")
 var walk = flag.Bool("w", false, "not driving")
 var debug = flag.Bool("g", false, "debug")
-var noup = flag.Bool("p", false, "disable automatic update checks")
+var up = flag.Bool("p", false, "enable automatic update checks")
 var version = flag.Bool("v", false, "show current version")
 var printJson = flag.Bool("json", false, "display output in json")
+var noVotes = flag.Bool("e", false, "print everyone")
+var comment = flag.Bool("c", false, "comment")
 var sekrit = ""
 var user = ""
 var host = ""
@@ -70,11 +73,10 @@ func main() {
 	flag.Parse()
 
 	// Check for new versions of the client application.
-	if !*noup {
-		err := CheckForUpdates()
-		if err != nil {
-			panic(err)
-		}
+	var upChan chan os.Error
+
+	if *up {
+		upChan = CheckForUpdates()
 	}
 
 	err := getConfig()
@@ -87,15 +89,15 @@ func main() {
 		return
 	}
 
-	r, e := jsonrpc.Dial("tcp", host)
+	r, e := rpc.DialHTTP("tcp", host)
 	if e != nil {
 		fmt.Println("Cannot connect to server: " + host)
 		os.Exit(-1)
 	}
 	remote := &LunchServer{r}
 
-	dest, err := strconv.Atoui(flag.Arg(0))
-	var places *[]Place
+	dest, err := strconv.Atoi(flag.Arg(0))
+	var poll *LunchPoll
 
 	switch {
 	case *version:
@@ -113,49 +115,78 @@ func main() {
 		remote.unvote()
 	case dest != 0:
 		remote.vote(dest)
+	case *comment:
+		comment := strings.Join(flag.Args(), " ")
+		remote.comment(comment)
 	default:
-		places = remote.displayPlaces()
+		poll = remote.displayPlaces()
 	}
 
-	if places != nil {
+	if poll != nil {
 		if *printJson {
-			out, err := json.Marshal(places)
+			out, err := json.Marshal(poll)
 			if err != nil {
 				panic(err.String())
 			}
 			fmt.Println(string(out))
 		} else {
-			for _, p := range *places {
-				ppPlace(&p)
+			for i, p := range poll.Places {
+				if i != 0 || *noVotes {
+					ppPlace(p)
+				}
 			}
 		}
 	}
 
+	if *up {
+		upErr := <-upChan
+		if upErr != nil {
+			panic(upErr)
+		}
+	}
 }
 
 func ppPlace(place *Place) {
 	home := os.Getenv("HOME")
 	t, err := template.ParseFile(path.Join(home, ".lunch", templateFile), nil)
 	if err != nil {
-		fmt.Println((*place).String())
+		fmt.Println(place.String())
 		return
 	}
 	t.Execute(place, os.Stdout)
 }
 
 
-func (t *LunchServer) addPlace(name string) (place uint) {
-	args := &AddPlaceArgs{Name: name}
+func (t *LunchServer) addPlace(name string) (place int) {
+	args := &StringArgs{String: name}
 	args.Auth = *(t.calcAuth(args))
 	err := t.Call("LunchTracker.AddPlace", &args, &place)
 	if err != nil {
 		panic(err)
 	}
+	if place < 0 {
+		panic(addPlaceError)
+	}
 	return
 }
 
-func (t *LunchServer) delPlace(dest uint) {
-	args := &UIntArgs{Num: dest}
+func (t *LunchServer) comment(comment string) {
+	args := &StringArgs{String: comment}
+	args.Auth = *(t.calcAuth(args))
+	var suc bool
+	err := t.Call("LunchTracker.Comment", &args, &suc)
+	if err != nil {
+		panic(err)
+	}
+
+	if !suc {
+		panic(commentError)
+	}
+	return
+}
+
+func (t *LunchServer) delPlace(dest int) {
+	args := &IntArgs{Num: dest}
 	args.Auth = *(t.calcAuth(args))
 	var suc bool
 	err := t.Call("LunchTracker.DelPlace", args, &suc)
@@ -168,8 +199,8 @@ func (t *LunchServer) delPlace(dest uint) {
 	return
 }
 
-func (t *LunchServer) drive(seats uint) {
-	args := &UIntArgs{Num: seats}
+func (t *LunchServer) drive(seats int) {
+	args := &IntArgs{Num: seats}
 	args.Auth = *(t.calcAuth(args))
 	var suc bool
 	err := t.Call("LunchTracker.Drive", args, &suc)
@@ -182,8 +213,8 @@ func (t *LunchServer) drive(seats uint) {
 	return
 }
 
-func (t *LunchServer) vote(dest uint) {
-	args := &UIntArgs{Num: dest}
+func (t *LunchServer) vote(dest int) {
+	args := &IntArgs{Num: dest}
 	args.Auth = *(t.calcAuth(args))
 	var suc bool
 	err := t.Call("LunchTracker.Vote", args, &suc)
@@ -210,15 +241,15 @@ func (t *LunchServer) unvote() {
 	return
 }
 
-func (t *LunchServer) displayPlaces() *[]Place {
+func (t *LunchServer) displayPlaces() *LunchPoll {
 	args := &EmptyArgs{}
 	args.Auth = *(t.calcAuth(args))
-	var places []Place
-	err := t.Call("LunchTracker.DisplayPlaces", args, &places)
+	var poll LunchPoll
+	err := t.Call("LunchTracker.DisplayPlaces", args, &poll)
 	if err != nil && err != os.EOF {
 		panic(err)
 	}
-	return &places
+	return &poll
 }
 
 func (t *LunchServer) undrive() {

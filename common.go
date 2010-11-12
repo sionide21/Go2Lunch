@@ -13,24 +13,24 @@ type Byter interface {
 	Byte() []byte
 }
 
-type AddPlaceArgs struct {
+type StringArgs struct {
 	Auth
-	Name string
+	String string
 }
 
-func (a *AddPlaceArgs) Byte() []byte {
-	b := bytes.NewBufferString(a.Name)
+func (a *StringArgs) Byte() []byte {
+	b := bytes.NewBufferString(a.String)
 	return b.Bytes()
 }
 
 
-type UIntArgs struct {
+type IntArgs struct {
 	Auth
-	Num uint
+	Num int
 }
 
-func (a *UIntArgs) Byte() []byte {
-	b := bytes.NewBufferString(strconv.Uitoa(a.Num))
+func (a *IntArgs) Byte() []byte {
+	b := bytes.NewBufferString(strconv.Itoa(a.Num))
 	return b.Bytes()
 }
 
@@ -45,14 +45,18 @@ func (a *EmptyArgs) Byte() []byte {
 type Person struct {
 	CanDrive        bool
 	Name            string
-	NumSeats        uint
+	NumSeats        int
 	NominationsLeft uint
+	Comment         string
 }
 
 func (p *Person) String() string {
 	str := p.Name
 	if p.CanDrive {
-		str += " [" + strconv.Uitoa(p.NumSeats) + " seats]"
+		str += " [" + strconv.Itoa(p.NumSeats) + " seats]"
+	}
+	if p.Comment != "" {
+		str += " -- " + p.Comment
 	}
 	return str
 }
@@ -65,10 +69,10 @@ func (p *Person) UnmarshalJSON(data []byte) os.Error {
 }
 
 type Place struct {
-	Id        uint
+	Id        int
 	Name      string
 	Votes     uint
-	People    []*Person
+	People    PersonVector
 	Nominator *Person
 }
 
@@ -106,9 +110,24 @@ type Auth struct {
 }
 
 func (p *Place) String() string {
-	str := strconv.Uitoa(p.Id) + ") " + p.Name + " nominated by " + p.Nominator.Name + " [" + strconv.Uitoa(p.Votes) + " votes]"
+	nomName := "nobody"
+	if p.Nominator != nil {
+		nomName = p.Nominator.Name
+	}
+
+	str := strconv.Itoa(p.Id) + ") " + p.Name + " : " + nomName + " [" + strconv.Uitoa(p.Votes) + " votes]"
 	for _, person := range p.People {
 		str += "\n  - " + person.String()
 	}
 	return str
+}
+
+func (p *Place) RemovePerson(name string) *Person {
+	for i, e := range p.People {
+		if e.Name == name {
+			defer p.People.Delete(i)
+			return p.People.At(i)
+		}
+	}
+	return &Person{}
 }

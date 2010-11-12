@@ -1,7 +1,13 @@
-common = ['common.go']
+common = [
+  'common.go',
+  'model.go',
+  'vectors.go',
+  'personvector.go',
+  'placevector.go'
+]
 
 $exes = {
-    'server' => common + ['model.go'], 
+    'server' => common + ['lunchTracker.go'], 
     'lunch' => common + ['update.go']
 }
 
@@ -30,7 +36,7 @@ end
 desc "Build all binaries"
 task :build_all => $exes.keys
 
-task :default => [:build_all]
+task :default => [:generate, :build_all]
 
 desc "Clean, then build"
 task :rebuild => [:clean, :build_all]
@@ -43,6 +49,13 @@ task :format do
 end
 
 desc "Clean, format, build, and if successful, commit"
-task :commit => [:clean, :format, :build_all] do
+task :commit => [:clean, :generate, :format, :build_all] do
     sh "git commit -a"
+end
+
+desc "Generates the proper vector files"
+task :generate do
+  %w(Person Place).each do |type|
+    sh "cat #{ENV['GOROOT'] || '~/go'}/src/pkg/container/vector/vector.go | gofmt -r='Vector -> #{type}Vector' | gofmt -r='interface{} -> *#{type}' | sed 's/vector/main/' > #{type.downcase}vector.go"
+  end
 end
