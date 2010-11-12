@@ -15,7 +15,7 @@ func (t *LunchTracker) AddPlace(args *StringArgs, place *int) os.Error {
 	}
 	var ok bool
 	poll := t.getPoll()
-	*place, ok = poll.addPlace(args.Name, args.Auth.Name)
+	*place, ok = poll.addPlace(args.String, args.Auth.Name)
 	if !ok {
 		*place = -1
 	}
