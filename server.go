@@ -20,6 +20,7 @@ var port = flag.Uint("p", 1234, "Specifies the port to listen on.")
 var configFile = flag.String("c", "config.json", "Specify a config file.")
 var dataFile = flag.String("d", "", "Specify a data file.")
 var displayHelp = flag.Bool("help", false, "Displays this help message.")
+var logFile = flag.String("log", "stderr", "Print errors to logfile.")
 
 type ServerConfig struct {
 	Sekritz map[string]string
@@ -83,8 +84,17 @@ func verify(a *Auth, d Byter) (bool, os.Error) {
 
 
 func main() {
-	log.SetOutput(os.Stderr)
 	flag.Parse()
+	if *logFile == "stderr" {
+		log.SetOutput(os.Stderr)
+	} else {
+		logger, err := os.Open(*logFile, os.O_WRONLY|os.O_CREATE, 0640)
+		if err != nil {
+			log.SetOutput(os.Stderr)
+			log.Exit(err)
+		}
+		log.SetOutput(logger)
+	}
 
 	if *displayHelp {
 		flag.PrintDefaults()
