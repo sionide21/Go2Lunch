@@ -2,7 +2,6 @@ package main
 
 import (
 	"rpc"
-	"http"
 	"log"
 	"net"
 	"os"
@@ -118,12 +117,25 @@ func main() {
 	*dataFile = "poll.gob"
 
 	rpc.Register(t)
-	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":"+strconv.Uitoa(*port))
 	if e != nil {
 		log.Exit("listen error:", e)
 	}
-	http.Serve(l, nil)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			log.Println("Failed to accept client", err)
+		} else {
+			go func() {
+				defer func() {
+					if x := recover(); x != nil {
+						log.Println("Fatal Exception", x)
+					}
+				}()
+				rpc.ServeConn(conn)
+			}()
+		}
+	}
 }
 
 func newPollChan() *LunchTracker {

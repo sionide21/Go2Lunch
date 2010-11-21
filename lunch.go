@@ -89,7 +89,7 @@ func main() {
 		return
 	}
 
-	r, e := rpc.DialHTTP("tcp", host)
+	r, e := rpc.Dial("tcp", host)
 	if e != nil {
 		fmt.Println("Cannot connect to server: " + host)
 		os.Exit(-1)
