@@ -7,7 +7,7 @@ common = [
 ]
 
 $exes = {
-    'server' => common + ['lunchTracker.go'], 
+    'lunchd' => common + ['lunchTracker.go'], 
     'lunch' => common + ['update.go']
 }
 
