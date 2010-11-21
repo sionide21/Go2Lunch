@@ -28,7 +28,7 @@ end
 
 desc "Remove derived files"
 task :clean do
-    FileList['*.6'].include($exes.keys).existing.each do |file|
+    FileList['*.6'].include($exes.keys).include(%w(person place).map { |p| "#{p}vector.go" }).existing.each do |file|
         sh "rm #{file}"
     end
 end
